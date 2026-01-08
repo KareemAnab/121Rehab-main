@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 
 declare const google: any;
 
@@ -145,25 +146,32 @@ export default function LocationSearchBar({ onLocationChange }: Props) {
         <input
           ref={inputRef}
           type="text"
-          className="flex-1 rounded-full border border-slate-200 px-4 py-3 text-sm outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+          className="flex-1 rounded-full border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-1 focus:ring-[color:var(--brand)]"
           placeholder="Enter an address or city"
           onKeyDown={handleKeyDown}
         />
         <div className="flex gap-3 sm:w-auto">
-          <button
+          <motion.button
             type="button"
             onClick={handleSearchClick}
-            className="inline-flex flex-1 items-center justify-center rounded-full bg-rose-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-rose-600 sm:flex-none"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.12, ease: "easeOut" }}
+            className="inline-flex flex-1 items-center justify-center rounded-full btn-primary px-5 py-3 text-sm font-semibold shadow-sm sm:flex-none"
           >
             Search
-          </button>
-          <button
+          </motion.button>
+
+          <motion.button
             type="button"
             onClick={handleUseMyLocation}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.12, ease: "easeOut" }}
             className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:border-slate-300 sm:flex-none"
           >
             Use my location
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>

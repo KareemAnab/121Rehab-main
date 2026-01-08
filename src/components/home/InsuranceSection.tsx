@@ -1,5 +1,7 @@
-// src/components/home/InsuranceSection.tsx
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function InsuranceSection() {
   return (
@@ -7,10 +9,15 @@ export default function InsuranceSection() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
         <div className="grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-10 items-center">
           {/* Left side: text + CTA */}
-          <div>
-            <p className="text-xs font-semibold tracking-[0.16em] uppercase text-pink-500">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <p className="text-xs font-semibold tracking-[0.16em] uppercase text-brand">
               Verify your coverage
             </p>
+
             <h2 className="mt-2 text-3xl sm:text-4xl font-bold text-neutral-900">
               Most insurance plans accepted
             </h2>
@@ -25,33 +32,55 @@ export default function InsuranceSection() {
               you can contact our team.
             </p>
 
-            <Link
-              href="/insurance"
-              className="inline-flex mt-6 bg-rose-600 hover:bg-rose-700 text-white px-6 py-3 rounded-full font-semibold text-sm shadow"
+            <motion.div
+              className="inline-flex mt-6"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.12, ease: "easeOut" }}
             >
-              Check coverage
-            </Link>
+              <Link
+                href="/insurance"
+                className="btn-primary px-6 py-3 rounded-full font-semibold text-sm shadow"
+              >
+                Check coverage
+              </Link>
+            </motion.div>
 
             <p className="mt-3 text-xs text-neutral-500">
               *Coverage varies by plan and payer requirements.
             </p>
-          </div>
+          </motion.div>
 
-          {/* Right side: pink callout box */}
+          {/* Right side: themed callout box */}
           <div className="hidden md:block">
-            <div className="rounded-2xl border border-dashed border-rose-200 bg-rose-50/70 px-6 py-8">
-              <p className="text-sm font-semibold text-rose-700 uppercase tracking-wide">
+            <motion.div
+              className="rounded-2xl callout-box px-6 py-8"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: "easeOut", delay: 0.05 }}
+            >
+              <p className="text-sm font-semibold uppercase tracking-wide callout-title">
                 Not sure if you’re covered?
               </p>
               <p className="mt-3 text-sm text-neutral-700 leading-relaxed">
-                Share your insurance information on our{" "}
-                <Link href="/insurance" className="text-rose-700 underline">
-                  insurance verification
-                </Link>{" "}
-                page and our team will review your benefits before your first
-                visit.
+                We work with most major insurance plans. Because benefits vary
+                by plan, our team is happy to help you understand your coverage
+                options.
               </p>
-            </div>
+
+              <p className="mt-2 text-sm">
+                <motion.span
+                  className="inline-block"
+                  whileHover={{ y: -1 }}
+                  transition={{ duration: 0.12, ease: "easeOut" }}
+                >
+                  <Link href="/contact" className="text-brand underline">
+                    Reach out to our clinic
+                  </Link>
+                </motion.span>{" "}
+                and we’ll walk you through the next steps.
+              </p>
+            </motion.div>
           </div>
         </div>
       </div>

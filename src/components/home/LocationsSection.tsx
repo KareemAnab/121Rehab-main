@@ -17,7 +17,6 @@ export default function LocationsSection() {
 
   const handleUserLocationChange = (coords: { lat: number; lng: number }) => {
     const nearest = findNearestLocation(coords, clinicLocations);
-
     if (!nearest) return;
 
     if (nearest.id !== activeLocationId) {
@@ -56,7 +55,7 @@ export default function LocationsSection() {
           )}
 
           <div className="mt-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand">
               Nearest location
             </p>
 

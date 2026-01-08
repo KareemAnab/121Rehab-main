@@ -3,13 +3,13 @@ import AboutSplit from "@/components/home/AboutSplit";
 const aboutClinicContent = {
   title: "About Our Clinic",
   description:
-    "We combine hands-on therapy with modern techniques to deliver measurable outcomes. Our team focuses on one-on-one care so you can get back to the activities you love.",
+    "For over 10 years, 121 Rehab has helped patients recover from injury, reduce pain, and return to the activities they love. We combine hands-on therapy with modern techniques and one-on-one care to deliver measurable outcomes and lasting confidence in movement.",
   imageUrl: "/images/home/about-clinic.jpg", // update to your real image path
   cta: {
     label: "Learn More",
     href: "/about",
   },
-  reverse: false, // flip to true if you want the image on the right / text on the left
+  reverse: false,
 };
 
 export default function AboutClinicSection() {

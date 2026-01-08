@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export type Item = {
   label: string;
@@ -42,7 +43,7 @@ export default function Section({
   const header = hasHeader ? (
     <header className={`${alignCls} max-w-3xl`}>
       {eyebrow && (
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-600">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
           {eyebrow}
         </p>
       )}
@@ -67,10 +68,10 @@ export default function Section({
             <ul className="grid gap-3 text-sm text-slate-700 md:grid-cols-2">
               {items.map((item) => (
                 <li key={item.href} className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                  <span className="h-1.5 w-1.5 rounded-full dot-brand" />
                   <Link
                     href={item.href}
-                    className="hover:text-rose-600 transition-colors"
+                    className="hover:text-brand transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -78,15 +79,21 @@ export default function Section({
               ))}
             </ul>
           )}
-
           {cta && (
             <div className="mt-6">
-              <Link
-                href={cta.href}
-                className="inline-flex rounded-full bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-rose-700"
+              <motion.div
+                className="inline-flex"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.12, ease: "easeOut" }}
               >
-                {cta.label}
-              </Link>
+                <Link
+                  href={cta.href}
+                  className="inline-flex rounded-full btn-primary px-5 py-2.5 text-sm font-semibold shadow-sm"
+                >
+                  {cta.label}
+                </Link>
+              </motion.div>
             </div>
           )}
         </div>
@@ -99,18 +106,16 @@ export default function Section({
     return (
       <section className={`container mx-auto px-5 py-16 ${className}`}>
         {header}
-        <div
-          className={`mt-10 grid gap-10 lg:grid-cols-[1.1fr_1.3fr] items-start`}
-        >
+        <div className="mt-10 grid gap-10 lg:grid-cols-[1.1fr_1.3fr] items-start">
           <div>
             {items && items.length > 0 && (
               <ul className="grid gap-3 text-sm text-slate-700">
                 {items.map((item) => (
                   <li key={item.href} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                    <span className="h-1.5 w-1.5 rounded-full dot-brand" />
                     <Link
                       href={item.href}
-                      className="hover:text-rose-600 transition-colors"
+                      className="hover:text-brand transition-colors"
                     >
                       {item.label}
                     </Link>
@@ -118,15 +123,21 @@ export default function Section({
                 ))}
               </ul>
             )}
-
             {cta && (
               <div className="mt-6">
-                <Link
-                  href={cta.href}
-                  className="inline-flex rounded-full bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-rose-700"
+                <motion.div
+                  className="inline-flex"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.12, ease: "easeOut" }}
                 >
-                  {cta.label}
-                </Link>
+                  <Link
+                    href={cta.href}
+                    className="inline-flex rounded-full btn-primary px-5 py-2.5 text-sm font-semibold shadow-sm"
+                  >
+                    {cta.label}
+                  </Link>
+                </motion.div>
               </div>
             )}
           </div>

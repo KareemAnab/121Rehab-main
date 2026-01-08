@@ -3,6 +3,14 @@ import Link from "next/link";
 import { getPosts } from "@/lib/wordpress";
 import YouTubeBanner from "@/components/blog/YouTubeBanner";
 import { HERO_GRADIENT } from "@/lib/theme";
+import {
+  MotionArticle,
+  MotionDiv,
+  MotionLinkButton,
+  liftIn,
+  enter,
+  hover,
+} from "@/components/motion/Motion";
 
 export const revalidate = 60;
 
@@ -34,13 +42,13 @@ export default async function BlogPage() {
     <div className="bg-neutral-50">
       <section className={`${HERO_GRADIENT} text-white`}>
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
-          <p className="text-xs font-semibold tracking-[0.16em] uppercase text-rose-100">
+          <p className="text-xs font-semibold tracking-[0.16em] uppercase text-white/80">
             Our Research &amp; Education
           </p>
           <h1 className="mt-2 text-3xl sm:text-4xl lg:text-5xl font-bold">
             121 Rehab Blog
           </h1>
-          <p className="mt-3 text-sm sm:text-base text-rose-50/90 max-w-2xl">
+          <p className="mt-3 text-sm sm:text-base text-white/90 max-w-2xl">
             Articles, tips, and stories to help you move with confidence.
           </p>
         </div>
@@ -52,7 +60,13 @@ export default async function BlogPage() {
         </div>
 
         {!hasRealPosts ? (
-          <div className="rounded-3xl border border-neutral-200 bg-white p-8 shadow-sm">
+          <MotionDiv
+            className="rounded-3xl border border-neutral-200 bg-white p-8 shadow-sm"
+            initial="initial"
+            animate="animate"
+            variants={liftIn}
+            transition={enter}
+          >
             <h2 className="text-xl font-semibold text-neutral-900">
               Blog coming soon
             </h2>
@@ -65,19 +79,19 @@ export default async function BlogPage() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/contact"
-                className="inline-flex items-center justify-center rounded-full bg-rose-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-700 transition-colors"
+                className="inline-flex items-center justify-center rounded-full btn-primary px-5 py-2 text-sm font-semibold shadow-sm transition-colors"
               >
                 Book an appointment
               </Link>
 
               <Link
                 href="tel:+19097832204"
-                className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-semibold text-neutral-800 shadow-sm hover:border-rose-300 transition-colors"
+                className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-semibold text-neutral-800 shadow-sm hover:border-[color:var(--brand)] transition-colors"
               >
                 Call clinic
               </Link>
             </div>
-          </div>
+          </MotionDiv>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2">
             {posts.map((post: any) => {
@@ -85,9 +99,11 @@ export default async function BlogPage() {
               const excerptText = stripHtml(post?.excerpt?.rendered ?? "");
 
               return (
-                <article
+                <MotionArticle
                   key={post.id}
-                  className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6 shadow-sm hover:shadow-md transition-shadow"
+                  className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6 shadow-sm"
+                  whileHover={{ y: -4 }}
+                  transition={hover}
                 >
                   <h2 className="text-lg font-semibold text-neutral-900">
                     {title}
@@ -99,11 +115,11 @@ export default async function BlogPage() {
 
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="inline-flex mt-4 text-sm font-semibold text-pink-600 hover:text-pink-700"
+                    className="inline-flex mt-4 text-sm font-semibold text-brand hover:opacity-90"
                   >
                     Read more →
                   </Link>
-                </article>
+                </MotionArticle>
               );
             })}
           </div>

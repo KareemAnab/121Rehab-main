@@ -1,42 +1,70 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 import Section from "@/components/home/Section";
-import { HERO_GRADIENT } from "@/lib/theme";
+
+const fadeUp = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+};
 
 export default function HomeHero() {
   return (
-    <div className="bg-gradient-to-r from-[#ff1959] to-[#ff5a7a] text-white">
+    <div className="text-white bg-gradient-to-r from-[var(--hero-from)] to-[var(--hero-to)]">
       <Section className="pt-16 pb-20 lg:pt-24 lg:pb-28">
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.1fr),minmax(0,0.9fr)]">
           {/* Left: main message */}
-          <div className="space-y-6">
+          <motion.div
+            {...fadeUp}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="space-y-6"
+          >
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/80">
               Strength in Every Step
             </p>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight">
-              Evidence-based physical therapy in West Covina &amp; Colton.
+              121 Rehab physical therapy serving the Inland Empire &amp; Los
+              Angeles County.
             </h1>
 
             <p className="max-w-xl text-base sm:text-lg text-white/90">
-              Recover from injury, reduce pain, and move with confidence. Our
-              one-on-one treatment plans are tailored to your goals— whether
-              you’re getting back to sport or everyday life.
+              For over 10 years, 121 Rehab has been committed to helping our
+              community recover, heal, and move better. Through personalized,
+              one-on-one care, we’ve guided thousands of patients back to
+              pain-free movement, improved mobility, and confidence in their
+              everyday lives.
             </p>
 
             <div className="flex flex-wrap gap-3">
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#ff1959] shadow-sm transition hover:bg-slate-100"
+              <motion.div
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.12, ease: "easeOut" }}
+                className="inline-flex"
               >
-                Contact Us
-              </Link>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold shadow-sm transition hover:bg-slate-100 text-brand"
+                >
+                  Contact Us
+                </Link>
+              </motion.div>
 
-              <Link
-                href="/services"
-                className="inline-flex items-center justify-center rounded-full border border-white/70 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              <motion.div
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.12, ease: "easeOut" }}
+                className="inline-flex"
               >
-                View all services
-              </Link>
+                <Link
+                  href="/services"
+                  className="inline-flex items-center justify-center rounded-full border border-white/70 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  View all services
+                </Link>
+              </motion.div>
             </div>
 
             <dl className="mt-6 grid max-w-md grid-cols-2 gap-4 text-sm text-white/90">
@@ -49,11 +77,15 @@ export default function HomeHero() {
                 </dd>
               </div>
             </dl>
-          </div>
+          </motion.div>
 
           {/* Right: mini info card */}
           <div className="hidden lg:block">
-            <div className="rounded-2xl bg-white/10 p-6 backdrop-blur shadow-lg border border-white/20">
+            <motion.div
+              {...fadeUp}
+              transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
+              className="rounded-2xl bg-white/10 p-6 backdrop-blur shadow-lg border border-white/20"
+            >
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
                 Why patients choose 121 Rehab
               </p>
@@ -67,7 +99,7 @@ export default function HomeHero() {
                   <span>Most major insurance plans accepted.</span>
                 </li>
               </ul>
-            </div>
+            </motion.div>
           </div>
         </div>
       </Section>

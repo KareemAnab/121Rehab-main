@@ -9,20 +9,16 @@ const services: Item[] = [
     href: "/services#specialty",
   },
   {
-    label: "Online Physical Therapy",
-    href: "/services#online-pt",
+    label: "Orthopedic Physical Therapy",
+    href: "/services#orthopedic-pt",
   },
   {
-    label: "Worker’s Comp Rehab",
-    href: "/services#workers-comp",
+    label: "Pelvic Therapy",
+    href: "/services#pelvic-therapy",
   },
   {
-    label: "Women’s Health",
-    href: "/services#womens-health",
-  },
-  {
-    label: "Hand Therapy",
-    href: "/services#hand-therapy",
+    label: "Sports Rehab & Performance",
+    href: "/services#sports-rehab",
   },
 ];
 
@@ -31,7 +27,7 @@ export default function ServicesSection() {
     <Section
       eyebrow="Strength in every step"
       title="Our Services"
-      description="From injury recovery to performance enhancement, we're here to help you reach your goals—online or in-clinic."
+      description="From injury recovery to performance enhancement, we're here to help you reach your goals."
       items={services}
       cta={{ label: "View All Services", href: "/services" }}
     />

@@ -1,17 +1,59 @@
 @import "tailwindcss";
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  /* Brand (edit these to retheme the whole site) */
+  --brand: #2563eb; /* primary */
+  --brand-hover: #1d4ed8; /* hover */
+  --brand-soft: #dbeafe; /* soft backgrounds */
+
+  /* Hero gradient (edit these for hero strips) */
+  --hero-from: #2563eb;
+  --hero-to: #0ea5e9;
+
+  /* Callout box (insurance reassurance / info cards) */
+  --callout-bg: #e6f0ff; /* darker fill */
+  --callout-border: #93c5fd; /* dashed border */
+  --callout-title: #1e3a8a; /* slightly darker blue */
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+/* Theme helpers */
+.text-brand {
+  color: var(--brand);
+}
+
+.bg-brand {
+  background: var(--brand);
+}
+.bg-brand-soft {
+  background: var(--brand-soft);
+}
+
+.dot-brand {
+  background: var(--brand);
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--brand);
+  color: white;
+}
+.btn-primary:hover {
+  background: var(--brand-hover);
+}
+
+.btn-outline {
+  border: 1px solid rgba(15, 23, 42, 0.25);
+  color: rgb(51, 65, 85);
+}
+.btn-outline:hover {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+/* Callout */
+.callout-box {
+  background: var(--callout-bg);
+  border: 1.5px dashed var(--callout-border);
+}
+.callout-title {
+  color: var(--callout-title);
 }

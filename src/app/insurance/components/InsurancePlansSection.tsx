@@ -1,90 +1,115 @@
-// src/components/insurance/InsurancePlansSection.tsx
-import Link from "next/link";
 import { HERO_GRADIENT } from "@/lib/theme";
+import {
+  MotionDiv,
+  MotionSection,
+  MotionLinkButton,
+  liftIn,
+  enter,
+} from "@/components/motion/Motion";
 
 export default function InsurancePlansSection() {
   return (
     <div className="bg-white">
       {/* HERO */}
-      <section className={`${HERO_GRADIENT} text-white`}>
+      <MotionSection
+        className={`${HERO_GRADIENT} text-white`}
+        initial="initial"
+        animate="animate"
+        variants={liftIn}
+        transition={enter}
+      >
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-16 pb-10">
           <p className="text-xs font-semibold tracking-[0.16em] uppercase text-white/80">
-            Verify your coverage
+            Insurance &amp; coverage
           </p>
           <h1 className="mt-2 text-3xl sm:text-4xl font-bold text-white">
             Insurance
           </h1>
         </div>
-      </section>
+      </MotionSection>
 
       {/* CONTENT */}
       <section className="bg-neutral-50">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 pt-24 pb-24">
           <div className="flex flex-col gap-8">
-            {/* Left */}
-            <div className="rounded-2xl border border-neutral-300 bg-white p-6 sm:p-7">
+            {/* Main card */}
+            <MotionDiv
+              className="rounded-2xl border border-neutral-300 bg-white p-6 sm:p-7"
+              initial="initial"
+              animate="animate"
+              variants={liftIn}
+              transition={enter}
+            >
               <h2 className="mb-3 text-base font-semibold text-neutral-900">
                 Most insurance plans accepted
               </h2>
 
               <p className="text-sm leading-relaxed text-neutral-700">
                 We accept most major insurance plans. Coverage varies by policy,
-                so our team can verify your benefits before you start care.
+                so our team can help confirm your benefits and any requirements
+                before you begin care.
               </p>
 
               <p className="mt-4 text-xs leading-relaxed text-neutral-500">
-                If you’d like to confirm whether your specific plan is accepted,
-                please contact our team.
+                To confirm whether your specific plan is accepted, please
+                contact our team.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link
+                <MotionLinkButton
                   href="/contact"
-                  className="inline-flex items-center justify-center rounded-full bg-rose-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-700 transition-colors"
+                  className="inline-flex items-center justify-center rounded-full btn-primary px-5 py-2 text-sm font-semibold shadow-sm transition-colors"
                 >
                   Contact us
-                </Link>
+                </MotionLinkButton>
 
-                <Link
+                <MotionLinkButton
                   href="tel:+19097832204"
-                  className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-semibold text-neutral-800 shadow-sm hover:border-rose-300 transition-colors"
+                  className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-semibold text-neutral-800 shadow-sm hover:border-[color:var(--brand)] transition-colors"
                 >
                   Call clinic
-                </Link>
+                </MotionLinkButton>
               </div>
 
               <p className="mt-4 text-xs text-neutral-500">
                 *Coverage varies by plan and payer requirements.
               </p>
-            </div>
+            </MotionDiv>
 
-            {/* Right callout (keeps your “box on the right” look) */}
-            <div className="rounded-2xl border border-rose-300/60 bg-rose-50 p-6 sm:p-7">
-              <p className="text-xs font-semibold tracking-[0.16em] uppercase text-rose-700">
-                Not sure if you’re covered?
+            {/* Callout */}
+            <MotionDiv
+              className="rounded-2xl callout-box p-6 sm:p-7"
+              initial="initial"
+              animate="animate"
+              variants={liftIn}
+              transition={{ ...enter, delay: 0.08 }}
+            >
+              <p className="text-xs font-semibold tracking-[0.16em] uppercase callout-title">
+                Not sure what your plan covers?
               </p>
 
               <p className="mt-3 text-sm leading-relaxed text-neutral-700">
-                Bring your insurance card and we’ll help confirm your benefits
-                before your first visit. You can also reach us any time with
-                questions.
+                Bring your insurance card and we’ll help confirm coverage
+                details before your first visit. You can also reach us any time
+                with questions.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link
+                <MotionLinkButton
                   href="/contact"
-                  className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-white px-5 py-2 text-sm font-semibold text-rose-700 shadow-sm hover:border-rose-300 transition-colors"
+                  className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-semibold text-neutral-800 shadow-sm hover:border-[color:var(--brand)] transition-colors"
                 >
                   Contact us
-                </Link>
-                <Link
+                </MotionLinkButton>
+
+                <MotionLinkButton
                   href="tel:+19097832204"
-                  className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-semibold text-neutral-800 shadow-sm hover:border-rose-300 transition-colors"
+                  className="inline-flex items-center justify-center rounded-full btn-primary px-5 py-2 text-sm font-semibold shadow-sm transition-colors"
                 >
                   Call now
-                </Link>
+                </MotionLinkButton>
               </div>
-            </div>
+            </MotionDiv>
           </div>
         </div>
       </section>

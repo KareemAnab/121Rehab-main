@@ -1,5 +1,14 @@
+"use client";
+
 import Image from "next/image";
 import { HERO_GRADIENT } from "@/lib/theme";
+import {
+  MotionDiv,
+  MotionSection,
+  liftIn,
+  enter,
+  hover,
+} from "@/components/motion/Motion";
 
 interface ConditionPageProps {
   title: string;
@@ -21,7 +30,13 @@ export default function ConditionPage({
   return (
     <main className="bg-white">
       {/* HERO TEXT */}
-      <section className={`${HERO_GRADIENT} text-white`}>
+      <MotionSection
+        className={`${HERO_GRADIENT} text-white`}
+        initial="initial"
+        animate="animate"
+        variants={liftIn}
+        transition={enter}
+      >
         <div className="mx-auto max-w-6xl px-6 pt-16 pb-14">
           <p className="text-xs font-semibold tracking-[0.16em] uppercase mb-3">
             Where it hurts
@@ -29,12 +44,18 @@ export default function ConditionPage({
           <h1 className="text-4xl font-semibold mb-4">{title}</h1>
           <p className="max-w-2xl text-white/90">{description}</p>
         </div>
-      </section>
+      </MotionSection>
 
       {/* IMAGE */}
       <section className="bg-white">
         <div className="mx-auto max-w-6xl px-6 pt-12 pb-24">
-          <div className="rounded-3xl overflow-hidden shadow-lg border border-neutral-100 bg-white">
+          <MotionDiv
+            className="rounded-3xl overflow-hidden shadow-lg border border-neutral-100 bg-white"
+            initial="initial"
+            animate="animate"
+            variants={liftIn}
+            transition={{ ...enter, delay: 0.08 }}
+          >
             <div className="relative h-[420px]">
               <Image
                 src={heroImage}
@@ -44,42 +65,64 @@ export default function ConditionPage({
                 className="object-cover"
               />
             </div>
-          </div>
+          </MotionDiv>
         </div>
       </section>
 
       {/* DETAILS */}
       <section className="bg-white">
-        <div className="bg-white">
-          <div className="mx-auto max-w-6xl px-6 pt-10 pb-16">
-            <div className="grid gap-10 md:grid-cols-3 rounded-3xl border border-neutral-100 bg-white shadow-lg px-8 py-10">
-              <div>
-                <h2 className="font-semibold mb-3">Common Causes</h2>
-                <ul className="list-disc list-inside text-sm space-y-1">
-                  {commonCauses.map((c, i) => (
-                    <li key={i}>{c}</li>
-                  ))}
-                </ul>
-              </div>
+        <div className="mx-auto max-w-6xl px-6 pt-10 pb-16">
+          <div className="grid gap-10 md:grid-cols-3 rounded-3xl border border-neutral-100 bg-white shadow-lg px-8 py-10">
+            {/* Common Causes */}
+            <MotionDiv
+              initial="initial"
+              animate="animate"
+              variants={liftIn}
+              transition={{ ...enter, delay: 0.12 }}
+              whileHover={{ y: -2 }}
+              className="rounded-2xl"
+            >
+              <h2 className="font-semibold mb-3 text-brand">Common Causes</h2>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                {commonCauses.map((c, i) => (
+                  <li key={i}>{c}</li>
+                ))}
+              </ul>
+            </MotionDiv>
 
-              <div>
-                <h2 className="font-semibold mb-3">Symptoms</h2>
-                <ul className="list-disc list-inside text-sm space-y-1">
-                  {symptoms.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ul>
-              </div>
+            {/* Symptoms */}
+            <MotionDiv
+              initial="initial"
+              animate="animate"
+              variants={liftIn}
+              transition={{ ...enter, delay: 0.18 }}
+              whileHover={{ y: -2 }}
+              className="rounded-2xl"
+            >
+              <h2 className="font-semibold mb-3 text-brand">Symptoms</h2>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                {symptoms.map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+            </MotionDiv>
 
-              <div>
-                <h2 className="font-semibold mb-3">How We Treat It</h2>
-                <ul className="list-disc list-inside text-sm space-y-1">
-                  {treatment.map((t, i) => (
-                    <li key={i}>{t}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            {/* Treatment */}
+            <MotionDiv
+              initial="initial"
+              animate="animate"
+              variants={liftIn}
+              transition={{ ...enter, delay: 0.24 }}
+              whileHover={{ y: -2 }}
+              className="rounded-2xl"
+            >
+              <h2 className="font-semibold mb-3 text-brand">How We Treat It</h2>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                {treatment.map((t, i) => (
+                  <li key={i}>{t}</li>
+                ))}
+              </ul>
+            </MotionDiv>
           </div>
         </div>
       </section>

@@ -1,8 +1,10 @@
 // src/components/home/ConditionsTabs.tsx
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Section from "@/components/home/Section";
+import { AnimatePresence, motion } from "framer-motion";
+import { enter, enterSmall, press, hover } from "@/components/motion/Motion";
 
 type AreaKey =
   | "knee"
@@ -100,32 +102,53 @@ const areas: AreaContent[] = [
 
 export default function ConditionsTabs() {
   const [activeKey, setActiveKey] = useState<AreaKey>("knee");
-  const activeArea = areas.find((a) => a.key === activeKey) ?? areas[0];
+
+  const activeArea = useMemo(() => {
+    return areas.find((a) => a.key === activeKey) ?? areas[0];
+  }, [activeKey]);
 
   return (
     <section className="bg-white py-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-5 lg:flex-row">
         {/* Left tab list */}
-        <div className="w-full max-w-xs rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-500">
-          <p className="mb-4 text-[11px] uppercase tracking-[0.2em] text-rose-500">
+        <div className="w-full max-w-xs rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-500 shadow-sm">
+          <p className="mb-4 text-[11px] uppercase tracking-[0.2em] text-brand">
             Where does it hurt?
           </p>
-          <nav className="flex flex-col gap-1">
+
+          <nav className="relative flex flex-col gap-1">
             {areas.map((area) => {
               const isActive = area.key === activeKey;
+
               return (
-                <button
+                <motion.button
                   key={area.key}
                   type="button"
                   onClick={() => setActiveKey(area.key)}
-                  className={`w-full rounded-xl px-4 py-3 text-left transition ${
+                  className={[
+                    "relative w-full rounded-xl px-4 py-3 text-left",
+                    "outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] focus-visible:ring-offset-2",
+                    // Only color transitions here (avoid snappy transform CSS)
+                    "transition-colors",
                     isActive
-                      ? "bg-rose-500 text-white shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100"
-                  }`}
+                      ? "text-brand"
+                      : "text-slate-800 hover:bg-neutral-50",
+                  ].join(" ")}
+                  whileHover={!isActive ? { y: -1 } : undefined}
+                  whileTap={{ scale: 0.98 }}
+                  transition={press}
                 >
-                  {area.label}
-                </button>
+                  {/* Active background that glides smoothly */}
+                  {isActive && (
+                    <motion.span
+                      layoutId="conditionsTabsActive"
+                      className="absolute inset-0 rounded-xl bg-[var(--brand-soft)]"
+                      transition={hover}
+                    />
+                  )}
+
+                  <span className="relative z-10">{area.label}</span>
+                </motion.button>
               );
             })}
           </nav>
@@ -133,12 +156,22 @@ export default function ConditionsTabs() {
 
         {/* Right content card */}
         <div className="flex-1">
-          <Section
-            eyebrow="Where does it hurt?"
-            title={activeArea.title}
-            description={activeArea.description}
-            cta={{ label: activeArea.ctaLabel, href: activeArea.ctaHref }}
-          />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeArea.key}
+              initial={{ y: 14, opacity: 1 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -10, opacity: 1 }}
+              transition={enterSmall}
+            >
+              <Section
+                eyebrow="Where does it hurt?"
+                title={activeArea.title}
+                description={activeArea.description}
+                cta={{ label: activeArea.ctaLabel, href: activeArea.ctaHref }}
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </section>

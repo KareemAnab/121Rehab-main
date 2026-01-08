@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 type NavLink = { href: string; label: string };
 
@@ -44,13 +45,11 @@ export default function Header() {
     [pathname]
   );
 
-  // Close dropdown on route change (and close mobile menu too)
   useEffect(() => {
     setConditionsOpen(false);
     setMobileOpen(false);
   }, [pathname]);
 
-  // Click outside + ESC to close dropdown
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
       if (!conditionsOpen) return;
@@ -123,14 +122,13 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
-          {/* Home + Services */}
           {primaryLinks.slice(0, 2).map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={`text-sm font-medium ${
                 isActive(link.href)
-                  ? "text-red-600"
+                  ? "text-brand"
                   : "text-neutral-700 hover:text-black"
               }`}
             >
@@ -138,7 +136,7 @@ export default function Header() {
             </Link>
           ))}
 
-          {/* Conditions Dropdown (after Services) */}
+          {/* Conditions Dropdown */}
           <div
             ref={dropdownRef}
             className="relative"
@@ -146,56 +144,64 @@ export default function Header() {
               clearCloseTimer();
               setConditionsOpen(true);
             }}
-            onMouseLeave={() => {
-              scheduleClose();
-            }}
+            onMouseLeave={scheduleClose}
           >
             <button
               type="button"
-              onClick={() => setConditionsOpen((v) => !v)}
               className={`text-sm font-medium flex items-center gap-1 ${
                 conditionsActive
-                  ? "text-red-600"
+                  ? "text-brand"
                   : "text-neutral-700 hover:text-black"
               }`}
               aria-haspopup="menu"
               aria-expanded={conditionsOpen}
             >
-              Conditions <span className="text-xs">▼</span>
+              Conditions{" "}
+              <motion.span
+                className="text-xs inline-block"
+                animate={{ rotate: conditionsOpen ? 180 : 0 }}
+                transition={{ duration: 0.16, ease: "easeOut" }}
+              >
+                ▼
+              </motion.span>
             </button>
 
-            {conditionsOpen && (
-              <div
-                className="absolute left-0 mt-2 w-56 bg-white border border-neutral-200 rounded-xl shadow-lg p-2 z-50"
-                role="menu"
-              >
-                {conditionsLinks.map((c) => (
-                  <Link
-                    key={c.href}
-                    href={c.href}
-                    role="menuitem"
-                    onClick={() => setConditionsOpen(false)}
-                    className={`block px-3 py-2 rounded-lg text-sm ${
-                      pathname === c.href
-                        ? "bg-neutral-100 text-red-600"
-                        : "text-neutral-800 hover:bg-neutral-100"
-                    }`}
-                  >
-                    {c.label}
-                  </Link>
-                ))}
-              </div>
-            )}
+            <AnimatePresence initial={false}>
+              {conditionsOpen && (
+                <motion.div
+                  key="conditions-menu"
+                  className="absolute left-0 mt-2 w-56 bg-white border border-neutral-200 rounded-xl shadow-lg p-2 z-50"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                >
+                  {conditionsLinks.map((c) => (
+                    <Link
+                      key={c.href}
+                      href={c.href}
+                      onClick={() => setConditionsOpen(false)}
+                      className={`block px-3 py-2 rounded-lg text-sm ${
+                        pathname === c.href
+                          ? "bg-neutral-100 text-brand"
+                          : "text-neutral-800 hover:bg-neutral-100"
+                      }`}
+                    >
+                      {c.label}
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Remaining Links */}
           {primaryLinks.slice(2).map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={`text-sm font-medium ${
                 isActive(link.href)
-                  ? "text-red-600"
+                  ? "text-brand"
                   : "text-neutral-700 hover:text-black"
               }`}
             >
@@ -205,7 +211,7 @@ export default function Header() {
         </nav>
       </div>
 
-      {/* Mobile Menu (simple + consistent) */}
+      {/* Mobile Menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-neutral-200 bg-white">
           <div className="mx-auto max-w-6xl px-5 py-4 space-y-2">
@@ -214,7 +220,7 @@ export default function Header() {
                 key={l.href}
                 href={l.href}
                 className={`block py-2 text-sm font-medium ${
-                  isActive(l.href) ? "text-red-600" : "text-neutral-800"
+                  isActive(l.href) ? "text-brand" : "text-neutral-800"
                 }`}
               >
                 {l.label}
@@ -226,7 +232,7 @@ export default function Header() {
                 type="button"
                 onClick={() => setConditionsOpen((v) => !v)}
                 className={`w-full flex items-center justify-between py-2 text-sm font-medium ${
-                  conditionsActive ? "text-red-600" : "text-neutral-800"
+                  conditionsActive ? "text-brand" : "text-neutral-800"
                 }`}
                 aria-expanded={conditionsOpen}
               >
@@ -246,7 +252,7 @@ export default function Header() {
                       }}
                       className={`block px-3 py-2 rounded-lg text-sm ${
                         pathname === c.href
-                          ? "bg-neutral-100 text-red-600"
+                          ? "bg-neutral-100 text-brand"
                           : "text-neutral-800 hover:bg-neutral-100"
                       }`}
                     >
@@ -262,7 +268,7 @@ export default function Header() {
                 key={l.href}
                 href={l.href}
                 className={`block py-2 text-sm font-medium ${
-                  isActive(l.href) ? "text-red-600" : "text-neutral-800"
+                  isActive(l.href) ? "text-brand" : "text-neutral-800"
                 }`}
               >
                 {l.label}

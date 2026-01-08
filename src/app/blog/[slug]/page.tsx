@@ -3,6 +3,14 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPostBySlug } from "@/lib/wordpress";
 import { HERO_GRADIENT } from "@/lib/theme";
+import {
+  MotionArticle,
+  MotionDiv,
+  MotionLinkButton,
+  liftIn,
+  enter,
+  hover,
+} from "@/components/motion/Motion";
 
 export const revalidate = 60;
 
@@ -19,19 +27,16 @@ type WPPost = {
 function normalizeYouTubeUrl(url: string): string {
   if (!url) return url;
 
-  // youtu.be short links
   if (url.includes("youtu.be/")) {
     const id = url.split("youtu.be/")[1].split(/[?&]/)[0];
     return `https://www.youtube.com/embed/${id}`;
   }
 
-  // standard watch?v= links
   if (url.includes("watch?v=")) {
     const id = url.split("watch?v=")[1].split("&")[0];
     return `https://www.youtube.com/embed/${id}`;
   }
 
-  // already embed or other formats -> return as-is
   return url;
 }
 
@@ -74,7 +79,6 @@ export default async function BlogPostPage(props: {
   return (
     <div className="bg-white min-h-screen">
       <main>
-        {/* 🔴 RED GRADIENT HERO */}
         <section className={`${HERO_GRADIENT} text-white`}>
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
             <p className="text-xs font-semibold tracking-[0.16em] uppercase opacity-80 mb-3">
@@ -95,9 +99,14 @@ export default async function BlogPostPage(props: {
           </div>
         </section>
 
-        {/* Article card */}
         <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 -mt-10 pb-20">
-          <article className="rounded-3xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8">
+          <MotionArticle
+            className="rounded-3xl border border-neutral-100 bg-white shadow-sm p-6 sm:p-8"
+            initial="initial"
+            animate="animate"
+            variants={liftIn}
+            transition={enter}
+          >
             <Link
               href="/blog"
               className="mb-6 inline-flex text-sm text-gray-500 hover:text-gray-700"
@@ -106,13 +115,16 @@ export default async function BlogPostPage(props: {
             </Link>
 
             <div
-              className="prose prose-pink max-w-none prose-headings:scroll-mt-28"
+              className="prose prose-neutral max-w-none prose-headings:scroll-mt-28 prose-a:text-brand prose-a:no-underline hover:prose-a:opacity-90"
               dangerouslySetInnerHTML={{ __html: content }}
             />
 
-            {/* Videos block (0/1/2 handling) */}
             {hasVideos && (
-              <section className="mt-10 rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-8">
+              <MotionDiv
+                className="mt-10 rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-8"
+                whileHover={{ y: -2 }}
+                transition={hover}
+              >
                 <h2 className="text-lg font-semibold text-neutral-900 mb-4">
                   Before &amp; After
                 </h2>
@@ -140,9 +152,9 @@ export default async function BlogPostPage(props: {
                     </div>
                   )}
                 </div>
-              </section>
+              </MotionDiv>
             )}
-          </article>
+          </MotionArticle>
         </section>
       </main>
     </div>

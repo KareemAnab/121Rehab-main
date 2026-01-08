@@ -1,5 +1,13 @@
 // src/app/services/page.tsx
 import { HERO_GRADIENT } from "@/lib/theme";
+import {
+  MotionArticle,
+  MotionDiv,
+  MotionLinkButton,
+  liftIn,
+  enter,
+  hover,
+} from "@/components/motion/Motion";
 
 const services = [
   {
@@ -17,11 +25,11 @@ const services = [
     focus: "Orthopedic rehab",
   },
   {
-    title: "Hand Therapy",
+    title: "Pelvic Therapy",
     description:
-      "Targeted therapy for the hand, wrist, and elbow—supporting recovery from tendon/ligament injuries, repetitive strain, fractures, and post-surgical repairs.",
-    icon: "✋",
-    focus: "Upper extremity",
+      "Specialized, one-on-one pelvic therapy focused on improving core stability, pelvic floor function, and overall movement. Treatment is tailored to address pain, dysfunction, and mobility limitations in a supportive, private setting.",
+    icon: "🌸",
+    focus: "Pelvic therapy",
   },
   {
     title: "Sports Rehab & Performance",
@@ -35,48 +43,57 @@ const services = [
 export default function ServicesPage() {
   return (
     <div className="bg-slate-50">
-      {/* Gradient hero */}
+      {/* Hero */}
       <section className={`${HERO_GRADIENT} text-white`}>
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-          <p className="text-xs font-semibold tracking-[0.16em] uppercase text-rose-100">
+          <p className="text-xs font-semibold tracking-[0.16em] uppercase text-white/80">
             Strength in every step
           </p>
           <h1 className="mt-2 text-3xl sm:text-4xl lg:text-5xl font-bold">
             Our Services
           </h1>
-          <p className="mt-4 max-w-2xl text-sm sm:text-base text-rose-50/90 leading-relaxed">
+          <p className="mt-4 max-w-2xl text-sm sm:text-base text-white/90 leading-relaxed">
             121 Rehab provides one-on-one, hands-on physical therapy tailored to
             your goals at our West Covina and Colton locations.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <a
+            <MotionLinkButton
               href="/contact"
-              className="inline-flex items-center justify-center rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-rose-600 shadow-sm hover:bg-rose-50"
+              className="inline-flex items-center justify-center rounded-full bg-white px-6 py-2.5 text-sm font-semibold shadow-sm hover:bg-slate-100 text-brand"
             >
               Contact Us
-            </a>
-            <a
+            </MotionLinkButton>
+
+            <MotionLinkButton
               href="/insurance"
-              className="inline-flex items-center justify-center rounded-full border border-rose-100/80 bg-rose-600/10 px-6 py-2.5 text-sm font-semibold text-white hover:bg-rose-500/40"
+              className="inline-flex items-center justify-center rounded-full border border-white/70 bg-white/10 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/20"
             >
-              Check if we accept your insurance
-            </a>
+              Insurance &amp; coverage
+            </MotionLinkButton>
           </div>
         </div>
       </section>
 
-      {/* Services grid card that overlaps the hero */}
+      {/* Overlapping card */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-20 -mt-8">
-        <div className="rounded-3xl bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)] px-4 sm:px-6 lg:px-8 pt-10 pb-10">
+        <MotionDiv
+          className="rounded-3xl bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)] px-4 sm:px-6 lg:px-8 pt-10 pb-10"
+          initial="initial"
+          animate="animate"
+          variants={liftIn}
+          transition={enter}
+        >
           <div className="grid gap-6 md:grid-cols-2">
             {services.map((service) => (
-              <article
+              <MotionArticle
                 key={service.title}
-                className="group flex h-full flex-col gap-3 rounded-2xl border border-neutral-200/80 bg-white/90 p-6 sm:p-7 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
+                className="group relative flex h-full flex-col gap-3 rounded-2xl border border-neutral-200/80 bg-white p-6 sm:p-7 shadow-sm"
+                whileHover={{ y: -4 }}
+                transition={hover}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-lg">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft text-lg">
                     <span aria-hidden="true">{service.icon}</span>
                   </div>
                   <h2 className="text-base sm:text-lg font-semibold text-neutral-900">
@@ -88,10 +105,10 @@ export default function ServicesPage() {
                   {service.description}
                 </p>
 
-                <span className="mt-auto text-xs font-semibold uppercase tracking-wide text-rose-600">
+                <span className="mt-auto text-xs font-semibold uppercase tracking-wide text-brand">
                   {service.focus}
                 </span>
-              </article>
+              </MotionArticle>
             ))}
           </div>
 
@@ -100,7 +117,7 @@ export default function ServicesPage() {
             therapists can let you know if 121 Rehab is the right fit for your
             goals.
           </p>
-        </div>
+        </MotionDiv>
       </section>
     </div>
   );

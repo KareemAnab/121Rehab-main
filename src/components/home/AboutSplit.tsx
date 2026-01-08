@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 import Section from "./Section";
 
 export default function AboutSplit({
@@ -21,22 +24,38 @@ export default function AboutSplit({
           reverse ? "md:[&>*:first-child]:order-2" : ""
         }`}
       >
-        <img
+        <motion.img
           src={imageUrl}
           alt=""
           className="w-full h-72 md:h-96 object-cover rounded-2xl shadow-md"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
         />
-        <div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut", delay: 0.03 }}
+        >
           <p className="text-gray-700 leading-relaxed">{description}</p>
+
           {cta && (
-            <Link
-              href={cta.href}
-              className="inline-flex mt-6 bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-semibold"
+            <motion.div
+              className="inline-flex mt-6"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.12, ease: "easeOut" }}
             >
-              {cta.label}
-            </Link>
+              <Link
+                href={cta.href}
+                className="inline-flex btn-primary px-6 py-3 rounded-lg font-semibold shadow-sm"
+              >
+                {cta.label}
+              </Link>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
     </Section>
   );
