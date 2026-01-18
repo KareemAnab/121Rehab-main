@@ -20,7 +20,7 @@ const services = [
   {
     title: "Orthopedic Physical Therapy",
     description:
-      "Hands-on care for muscle and joint pain to improve strength, mobility, and function—built around your goals and daily demands.",
+      "Hands-on care for muscle and joint pain to improve strength, mobility, and function. Built around your goals and daily demands.",
     icon: "🦴",
     focus: "Orthopedic rehab",
   },

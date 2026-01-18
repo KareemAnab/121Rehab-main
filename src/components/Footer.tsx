@@ -89,18 +89,24 @@ export default function Footer() {
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-700">
               Contact
             </h3>
-            <ul className="space-y-2 text-sm text-neutral-700">
-              <li>
-                1405 W Valley Blvd #101
-                <br />
-                Colton, CA 92324
+            <ul className="text-sm text-neutral-700">
+              {/* Address */}
+              <li className="space-y-0.5">
+                <span className="font-medium text-neutral-800">
+                  Colton Clinic
+                </span>
+                <div>1405 W Valley Blvd #101</div>
+                <div>Colton, CA 92324</div>
               </li>
-              <li>
+
+              {/* Contact */}
+              <li className="mt-3">
                 Phone:{" "}
-                <a className="hover:text-neutral-900" href="tel:+17028265750">
+                <a className="hover:text-neutral-900" href="tel:+19097832204">
                   (909) 783-2204
                 </a>
               </li>
+
               <li>
                 Email:{" "}
                 <a
@@ -110,9 +116,20 @@ export default function Footer() {
                   pt121@yahoo.com
                 </a>
               </li>
-              <li className="pt-2">
-                <span className="font-medium">Hours:</span> Mon–Fri
-                7:00am–7:00pm
+
+              {/* Hours */}
+              <li className="mt-4 font-medium text-neutral-800">
+                Clinic Hours
+              </li>
+
+              <li className="mt-1">
+                <span className="font-medium">Colton:</span> Mon–Fri 7:30 AM –
+                1:00 PM
+              </li>
+
+              <li>
+                <span className="font-medium">West Covina:</span> Mon–Fri 11:00
+                AM – 6:00 PM
               </li>
             </ul>
 
@@ -139,12 +156,13 @@ export default function Footer() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 py-4 text-sm text-neutral-600 md:flex-row">
           <p>© {year} 121 Rehab. All rights reserved.</p>
           <div className="flex gap-4">
-            <Link className="hover:text-neutral-900" href="/privacy">
+            <Link className="hover:text-neutral-900" href="/privacy-policy">
               Privacy Policy
             </Link>
-            <Link className="hover:text-neutral-900" href="/terms">
+            <Link className="hover:text-neutral-900" href="/terms-of-service">
               Terms of Service
             </Link>
+
             <a className="hover:text-neutral-900" href="#top">
               Back to top
             </a>

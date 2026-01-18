@@ -38,7 +38,7 @@ const whyChooseUs = [
   {
     title: "One-on-one, hands-on care",
     description:
-      "Every visit is focused on you. We don’t bounce between multiple patients—your therapist is by your side the entire session.",
+      "Every visit is focused on you. We don’t bounce between multiple patients, your therapist is by your side the entire session.",
   },
   {
     title: "Evidence-based treatment",
@@ -100,7 +100,7 @@ function stripHtmlToText(html: string) {
  * This is easiest for the client (normal WP Posts workflow).
  */
 async function getTestimonialsFromPostsCategory(
-  limit = 3
+  limit = 3,
 ): Promise<UITestimonial[]> {
   const base =
     process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
@@ -110,7 +110,7 @@ async function getTestimonialsFromPostsCategory(
   // 1) Find the category ID by slug
   const catRes = await fetch(
     `${base.replace(/\/$/, "")}/wp-json/wp/v2/categories?slug=testimonials`,
-    { cache: "no-store" }
+    { cache: "no-store" },
   );
 
   if (!catRes.ok) return [];
@@ -122,9 +122,9 @@ async function getTestimonialsFromPostsCategory(
   const postsRes = await fetch(
     `${base.replace(
       /\/$/,
-      ""
+      "",
     )}/wp-json/wp/v2/posts?per_page=${limit}&categories=${catId}`,
-    { cache: "no-store" }
+    { cache: "no-store" },
   );
 
   if (!postsRes.ok) return [];
@@ -170,7 +170,7 @@ export default async function AboutPage() {
           <p className="mt-4 max-w-2xl text-sm sm:text-base text-white/90 leading-relaxed">
             Our mission is simple: help you move with confidence again. We blend
             hands-on therapy, personalized exercise, and clear education so you
-            understand your body—and your path to recovery.
+            understand your body and your path to recovery.
           </p>
         </div>
       </section>
@@ -195,7 +195,7 @@ export default async function AboutPage() {
 
             <div className="mt-3 grid gap-8 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-start">
               <p className="text-sm sm:text-base text-neutral-700 leading-relaxed">
-                Recovery isn&apos;t just about pain going away—it&apos;s about
+                Recovery isn&apos;t just about pain going away, it&apos;s about
                 getting back to the activities that make you feel like yourself.
                 We take the time to understand your story, your goals, and the
                 demands of your work, sport, and home life.{" "}

@@ -34,7 +34,11 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [conditionsOpen, setConditionsOpen] = useState(false);
 
+  // Desktop dropdown wrapper
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  // Mobile dropdown wrapper (NEW)
+  const mobileDropdownRef = useRef<HTMLDivElement | null>(null);
+
   const closeTimerRef = useRef<number | null>(null);
 
   const isActive = (href: string) =>
@@ -51,14 +55,20 @@ export default function Header() {
   }, [pathname]);
 
   useEffect(() => {
-    function onDocMouseDown(e: MouseEvent) {
+    function onDocPointerDown(e: PointerEvent) {
       if (!conditionsOpen) return;
+
       const target = e.target as Node | null;
-      if (
-        dropdownRef.current &&
-        target &&
-        !dropdownRef.current.contains(target)
-      ) {
+      if (!target) return;
+
+      const clickedInsideDesktop =
+        dropdownRef.current && dropdownRef.current.contains(target);
+
+      const clickedInsideMobile =
+        mobileDropdownRef.current && mobileDropdownRef.current.contains(target);
+
+      // If click/tap is outside both dropdown containers, close.
+      if (!clickedInsideDesktop && !clickedInsideMobile) {
         setConditionsOpen(false);
       }
     }
@@ -70,10 +80,12 @@ export default function Header() {
       }
     }
 
-    document.addEventListener("mousedown", onDocMouseDown);
+    // pointerdown is more reliable across touch devices than mousedown
+    document.addEventListener("pointerdown", onDocPointerDown);
     document.addEventListener("keydown", onDocKeyDown);
+
     return () => {
-      document.removeEventListener("mousedown", onDocMouseDown);
+      document.removeEventListener("pointerdown", onDocPointerDown);
       document.removeEventListener("keydown", onDocKeyDown);
     };
   }, [conditionsOpen]);
@@ -136,7 +148,7 @@ export default function Header() {
             </Link>
           ))}
 
-          {/* Conditions Dropdown */}
+          {/* Conditions Dropdown (desktop) */}
           <div
             ref={dropdownRef}
             className="relative"
@@ -222,12 +234,14 @@ export default function Header() {
                 className={`block py-2 text-sm font-medium ${
                   isActive(l.href) ? "text-brand" : "text-neutral-800"
                 }`}
+                onClick={() => setMobileOpen(false)}
               >
                 {l.label}
               </Link>
             ))}
 
-            <div className="pt-2">
+            {/* Mobile Conditions dropdown wrapper (NEW ref target) */}
+            <div className="pt-2" ref={mobileDropdownRef}>
               <button
                 type="button"
                 onClick={() => setConditionsOpen((v) => !v)}
@@ -270,6 +284,7 @@ export default function Header() {
                 className={`block py-2 text-sm font-medium ${
                   isActive(l.href) ? "text-brand" : "text-neutral-800"
                 }`}
+                onClick={() => setMobileOpen(false)}
               >
                 {l.label}
               </Link>
