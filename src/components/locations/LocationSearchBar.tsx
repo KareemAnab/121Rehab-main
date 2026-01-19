@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { loadGoogleMaps } from "@/lib/googleMapsLoader";
 
 declare const google: any;
 
@@ -67,9 +68,10 @@ export default function LocationSearchBar({ onLocationChange }: Props) {
 
     (async () => {
       try {
-        await loadGoogleMapsWithPlaces();
+        await loadGoogleMaps({ libraries: ["places"] });
         if (!isMounted) return;
-        if (!inputRef.current || !google?.maps?.places) return;
+        if (!inputRef.current) return;
+        if (!(window as any).google?.maps?.places) return;
 
         const autocomplete = new google.maps.places.Autocomplete(
           inputRef.current,
@@ -103,7 +105,7 @@ export default function LocationSearchBar({ onLocationChange }: Props) {
     if (!value) return;
 
     try {
-      await loadGoogleMapsWithPlaces();
+      await loadGoogleMaps({ libraries: ["places"] });
       if (!google?.maps) return;
 
       const geocoder = new google.maps.Geocoder();
