@@ -31,7 +31,7 @@ export const clinicLocations: ClinicLocation[] = [
     lng: -117.89929629080532,
     googleMapsUrl:
       "https://www.google.com/maps/place/2155+E+Garvey+Ave+N+Suite+B1,+West+Covina,+CA+91791",
-    imageUrl: "/images/locations/121RehabWestCovina.jpg",
+    imageUrl: "/images/locations/121rehabwestcovina.jpg",
   },
   {
     id: "colton",
@@ -47,6 +47,6 @@ export const clinicLocations: ClinicLocation[] = [
     lng: -117.34888502519352,
     googleMapsUrl:
       "https://www.google.com/maps/place/1405+W+Valley+Blvd+%23101,+Colton,+CA+92324",
-    imageUrl: "/images/locations/121RehabColton.jpg",
+    imageUrl: "/images/locations/121rehabcolton.jpg",
   },
 ];

@@ -271,7 +271,7 @@ export default async function AboutPage() {
                 <div className="grid gap-0 md:grid-cols-2">
                   <div className="relative aspect-[4/3] md:aspect-auto md:h-full">
                     <Image
-                      src="/images/team/121RehabTeam.jpg"
+                      src="/images/team/121rehabteam.jpg"
                       alt="The 121 Rehab care team"
                       fill
                       className="object-cover"
