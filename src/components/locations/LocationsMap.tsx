@@ -19,16 +19,12 @@ export default function LocationsMap({ selectedLocation }: Props) {
 
     (async () => {
       try {
-        // Always request places so both the map + search bar share the same loader config
         await loadGoogleMaps({ libraries: ["places"] });
 
         if (!mapRef.current) return;
         if (!(window as any).google?.maps) return;
 
-        const center = {
-          lat: selectedLocation.lat,
-          lng: selectedLocation.lng,
-        };
+        const center = { lat: selectedLocation.lat, lng: selectedLocation.lng };
 
         map = new google.maps.Map(mapRef.current, {
           center,
@@ -58,5 +54,11 @@ export default function LocationsMap({ selectedLocation }: Props) {
     selectedLocation.name,
   ]);
 
-  return <div ref={mapRef} className="h-full w-full rounded-3xl" />;
+  // ✅ IMPORTANT: explicit height so it can render inside a normal div
+  return (
+    <div
+      ref={mapRef}
+      className="h-[420px] w-full rounded-3xl bg-slate-100 lg:h-[520px]"
+    />
+  );
 }

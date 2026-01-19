@@ -1,7 +1,5 @@
 // src/lib/googleMapsLoader.ts
-type LoadOpts = {
-  libraries?: string[];
-};
+type LoadOpts = { libraries?: string[] };
 
 let loaderPromise: Promise<void> | null = null;
 let loaderLibKey = "";
@@ -21,10 +19,7 @@ export function loadGoogleMaps(opts: LoadOpts = {}): Promise<void> {
     .sort();
   const libsKey = libs.join(",");
 
-  // If already loaded with required libs, resolve immediately
   if (hasGoogle(libs)) return Promise.resolve();
-
-  // If we already started a load with the same libs, reuse it
   if (loaderPromise && loaderLibKey === libsKey) return loaderPromise;
 
   loaderLibKey = libsKey;
@@ -34,10 +29,21 @@ export function loadGoogleMaps(opts: LoadOpts = {}): Promise<void> {
 
     if (!key) {
       reject(
-        new Error("NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing at runtime"),
+        new Error(
+          "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing at runtime (Vercel env var not baked into build). Redeploy after adding it.",
+        ),
       );
       return;
     }
+
+    // ✅ Catch Google auth failures (referrer/billing/API disabled)
+    (window as any).gm_authFailure = () => {
+      reject(
+        new Error(
+          "gm_authFailure: Google blocked the Maps script. This is almost always ReferrerNotAllowed, Billing disabled, or Maps JavaScript API not enabled.",
+        ),
+      );
+    };
 
     const existing = document.querySelector<HTMLScriptElement>(
       'script[data-google-maps="true"]',
@@ -48,20 +54,18 @@ export function loadGoogleMaps(opts: LoadOpts = {}): Promise<void> {
       else {
         reject(
           new Error(
-            "Google Maps script loaded but google.maps (or requested libraries) not available. Check console for InvalidKey/RefererNotAllowed/Billing/API-not-enabled.",
+            "Maps script loaded but google.maps (or required libraries) are missing. Check console for Google Maps JavaScript API error details.",
           ),
         );
       }
     };
 
     if (existing) {
-      // Script exists: if it's already loaded, finish immediately (prevents deadlock)
       if (existing.dataset.loaded === "true") {
         finish();
         return;
       }
 
-      // Otherwise wait for it
       existing.addEventListener(
         "load",
         () => {
@@ -70,11 +74,18 @@ export function loadGoogleMaps(opts: LoadOpts = {}): Promise<void> {
         },
         { once: true },
       );
+
       existing.addEventListener(
         "error",
-        () => reject(new Error("Failed to load Google Maps JavaScript API")),
+        () =>
+          reject(
+            new Error(
+              "Failed to load Google Maps JavaScript API (network/script error)",
+            ),
+          ),
         { once: true },
       );
+
       return;
     }
 
@@ -95,8 +106,13 @@ export function loadGoogleMaps(opts: LoadOpts = {}): Promise<void> {
       script.dataset.loaded = "true";
       finish();
     });
+
     script.addEventListener("error", () =>
-      reject(new Error("Failed to load Google Maps JavaScript API")),
+      reject(
+        new Error(
+          "Failed to load Google Maps JavaScript API (script tag error)",
+        ),
+      ),
     );
 
     document.head.appendChild(script);
