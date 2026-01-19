@@ -1,59 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { loadGoogleMaps } from "@/lib/googleMapsLoader";
 
 declare const google: any;
-
-// Single shared loader for the Maps JS (with Places library)
-let googleMapsPromise: Promise<void> | null = null;
-
-function loadGoogleMapsWithPlaces(): Promise<void> {
-  if (googleMapsPromise) return googleMapsPromise;
-
-  googleMapsPromise = new Promise<void>((resolve, reject) => {
-    if (typeof window === "undefined") {
-      resolve();
-      return;
-    }
-
-    // If script already present & loaded, resolve immediately
-    if ((window as any).google?.maps?.places) {
-      resolve();
-      return;
-    }
-
-    const existing = document.querySelector<HTMLScriptElement>(
-      'script[data-google-maps="true"]',
-    );
-
-    if (existing) {
-      if ((window as any).google?.maps) {
-        resolve();
-        return;
-      }
-
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(), { once: true });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.dataset.googleMaps = "true";
-
-    script.onload = () => resolve();
-    script.onerror = () =>
-      reject(new Error("Failed to load Google Maps JavaScript API"));
-
-    document.head.appendChild(script);
-  });
-
-  return googleMapsPromise;
-}
 
 type Props = {
   onLocationChange: (coords: { lat: number; lng: number }) => void;
@@ -62,9 +13,15 @@ type Props = {
 export default function LocationSearchBar({ onLocationChange }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Set up Places Autocomplete on the input
+  // If user selects a place from the dropdown, we store its lat/lng here.
+  // Then the Search button can work without Geocoding API.
+  const selectedCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     let isMounted = true;
+    let autocomplete: any = null;
 
     (async () => {
       try {
@@ -73,59 +30,86 @@ export default function LocationSearchBar({ onLocationChange }: Props) {
         if (!inputRef.current) return;
         if (!(window as any).google?.maps?.places) return;
 
-        const autocomplete = new google.maps.places.Autocomplete(
-          inputRef.current,
-          {
-            fields: ["geometry", "formatted_address"],
-            types: ["geocode"],
-          },
-        );
+        autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
+          fields: ["geometry", "formatted_address", "name"],
+          types: ["geocode"],
+        });
 
-        // only update the input text; actual search happens on button / Enter
         autocomplete.addListener("place_changed", () => {
           const place = autocomplete.getPlace();
-          const formatted = place?.formatted_address;
+          const loc = place?.geometry?.location;
+
+          // Update visible input text
+          const formatted = place?.formatted_address || place?.name;
           if (formatted && inputRef.current) {
             inputRef.current.value = formatted;
           }
+
+          // Store coords (this is the key fix)
+          if (loc) {
+            selectedCoordsRef.current = { lat: loc.lat(), lng: loc.lng() };
+            setError(null);
+          } else {
+            selectedCoordsRef.current = null;
+          }
         });
       } catch (err) {
-        console.error("Failed to init Places Autocomplete", err);
+        console.error("Failed to init Places Autocomplete:", err);
+        setError("Search is unavailable right now.");
       }
     })();
 
     return () => {
       isMounted = false;
+      autocomplete = null;
     };
-  }, [onLocationChange]);
+  }, []);
 
-  // Manual search button (geocoding whatever is typed)
-  const handleSearchClick = async () => {
-    const value = inputRef.current?.value?.trim();
+  const handleSearch = async () => {
+    const value = inputRef.current?.value?.trim() || "";
     if (!value) return;
 
+    setError(null);
+
+    // ✅ If user picked a suggestion, use its geometry immediately (no geocode)
+    if (selectedCoordsRef.current) {
+      onLocationChange(selectedCoordsRef.current);
+      return;
+    }
+
+    // Fallback: user typed manually (may require Geocoding API + billing)
     try {
       await loadGoogleMaps({ libraries: ["places"] });
-      if (!google?.maps) return;
+      if (!(window as any).google?.maps) return;
 
       const geocoder = new google.maps.Geocoder();
+
       geocoder.geocode({ address: value }, (results: any, status: string) => {
-        if (status !== "OK" || !results?.length) return;
-        const loc = results[0].geometry?.location;
+        if (status !== "OK" || !results?.length) {
+          console.error("Geocode failed:", status, results);
+          setError(
+            status === "ZERO_RESULTS"
+              ? "Try adding a city and state (ex: 1561 Main St, West Covina, CA)."
+              : "Search failed. Check Maps API key restrictions / billing.",
+          );
+          return;
+        }
+
+        const loc = results[0]?.geometry?.location;
         if (!loc) return;
 
-        onLocationChange({
-          lat: loc.lat(),
-          lng: loc.lng(),
-        });
+        onLocationChange({ lat: loc.lat(), lng: loc.lng() });
       });
     } catch (err) {
-      console.error("Manual geocode failed", err);
+      console.error("Manual search failed:", err);
+      setError("Search failed. Please try again.");
     }
   };
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) return;
+
+    setError(null);
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -135,7 +119,8 @@ export default function LocationSearchBar({ onLocationChange }: Props) {
         });
       },
       (err) => {
-        console.error("Geolocation error", err);
+        console.error("Geolocation error:", err);
+        setError("Could not access your location.");
       },
     );
   };
@@ -143,8 +128,15 @@ export default function LocationSearchBar({ onLocationChange }: Props) {
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleSearchClick();
+      handleSearch();
     }
+  };
+
+  const handleInputChange: React.ChangeEventHandler<HTMLInputElement> = () => {
+    // If user edits the text after selecting a suggestion,
+    // clear stored coords so Search will geocode the new text.
+    selectedCoordsRef.current = null;
+    setError(null);
   };
 
   return (
@@ -156,11 +148,13 @@ export default function LocationSearchBar({ onLocationChange }: Props) {
           className="flex-1 rounded-full border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-1 focus:ring-[color:var(--brand)]"
           placeholder="Enter an address or city"
           onKeyDown={handleKeyDown}
+          onChange={handleInputChange}
         />
+
         <div className="flex gap-3 sm:w-auto">
           <motion.button
             type="button"
-            onClick={handleSearchClick}
+            onClick={handleSearch}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.12, ease: "easeOut" }}
@@ -181,6 +175,8 @@ export default function LocationSearchBar({ onLocationChange }: Props) {
           </motion.button>
         </div>
       </div>
+
+      {error ? <div className="text-sm text-red-600">{error}</div> : null}
     </div>
   );
 }
