@@ -24,10 +24,15 @@ function loadGoogleMapsWithPlaces(): Promise<void> {
     }
 
     const existing = document.querySelector<HTMLScriptElement>(
-      'script[data-google-maps="true"]'
+      'script[data-google-maps="true"]',
     );
 
     if (existing) {
+      if ((window as any).google?.maps) {
+        resolve();
+        return;
+      }
+
       existing.addEventListener("load", () => resolve(), { once: true });
       existing.addEventListener("error", () => reject(), { once: true });
       return;
@@ -71,7 +76,7 @@ export default function LocationSearchBar({ onLocationChange }: Props) {
           {
             fields: ["geometry", "formatted_address"],
             types: ["geocode"],
-          }
+          },
         );
 
         // only update the input text; actual search happens on button / Enter
@@ -129,7 +134,7 @@ export default function LocationSearchBar({ onLocationChange }: Props) {
       },
       (err) => {
         console.error("Geolocation error", err);
-      }
+      },
     );
   };
 
