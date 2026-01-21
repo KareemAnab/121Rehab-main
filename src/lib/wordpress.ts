@@ -16,18 +16,36 @@ function normalizeBaseUrl(url: string) {
     .replace(/\/+$/, "");
 }
 
-// ✅ NEW SINGLE SOURCE OF TRUTH (bypasses poisoned old env keys)
-const WP_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_WP_BASE_URL || "");
+/**
+ * ✅ Preferred (new) key: NEXT_PUBLIC_WP_BASE_URL
+ * ✅ Fallbacks (old keys): NEXT_PUBLIC_WP_API_URL, NEXT_PUBLIC_WORDPRESS_URL
+ *
+ * IMPORTANT:
+ * - Do NOT throw at import time (breaks build).
+ * - If missing, return empty results and log once.
+ */
+const WP_BASE_URL = normalizeBaseUrl(
+  process.env.NEXT_PUBLIC_WP_BASE_URL ||
+    process.env.NEXT_PUBLIC_WP_API_URL ||
+    process.env.NEXT_PUBLIC_WORDPRESS_URL ||
+    "",
+);
 
-if (!WP_BASE_URL) {
-  throw new Error(
-    "Missing NEXT_PUBLIC_WP_BASE_URL. Set it in Vercel for Production/Preview/Development.",
-  );
-}
+const API_BASE = WP_BASE_URL ? `${WP_BASE_URL}/wp-json/wp/v2` : "";
 
-const API_BASE = `${WP_BASE_URL}/wp-json/wp/v2`;
+let warnedMissing = false;
 
 async function safeWpFetch<T>(path: string): Promise<T | null> {
+  if (!API_BASE) {
+    if (!warnedMissing) {
+      warnedMissing = true;
+      console.warn(
+        "[WP] Missing WP env var. Set NEXT_PUBLIC_WP_BASE_URL (preferred) or NEXT_PUBLIC_WP_API_URL / NEXT_PUBLIC_WORDPRESS_URL.",
+      );
+    }
+    return null;
+  }
+
   const url = `${API_BASE}${path}`;
 
   try {
@@ -42,7 +60,10 @@ async function safeWpFetch<T>(path: string): Promise<T | null> {
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       console.error(
-        `[WP] Fetch failed ${res.status} ${res.statusText} :: ${url} :: ${text.slice(0, 200)}`,
+        `[WP] Fetch failed ${res.status} ${res.statusText} :: ${url} :: ${text.slice(
+          0,
+          200,
+        )}`,
       );
       return null;
     }
