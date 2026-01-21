@@ -102,8 +102,7 @@ function stripHtmlToText(html: string) {
 async function getTestimonialsFromPostsCategory(
   limit = 3,
 ): Promise<UITestimonial[]> {
-  const base =
-    process.env.WORDPRESS_URL || process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+  const base = process.env.NEXT_PUBLIC_WP_API_URL || "";
 
   if (!base) return [];
 

@@ -4,148 +4,90 @@ export type WordPressPost = {
   id: number;
   slug: string;
   date?: string;
-  title: { rendered: string }; // required
-  excerpt: { rendered: string }; // required
+  title: { rendered: string };
+  excerpt: { rendered: string };
   content?: { rendered: string };
-  meta?: Record<string, any>;
+  acf?: Record<string, any>;
+  _embedded?: any;
 };
 
-// Resolve WP site URL from multiple possible env vars
-const rawSiteUrl =
-  process.env.NEXT_PUBLIC_WORDPRESS_URL ||
+function normalizeBaseUrl(url: string) {
+  return (url || "").trim().replace(/\/+$/, "");
+}
+
+// One source of truth (but supports your two env names)
+const WP_BASE_URL = normalizeBaseUrl(
   process.env.NEXT_PUBLIC_WP_API_URL ||
-  process.env.NEXT_PUBLIC_WORDPRESS_SITE_URL ||
-  process.env.NEXT_PUBLIC_WP_SITE_URL ||
-  process.env.WORDPRESS_URL ||
-  "";
+    process.env.NEXT_PUBLIC_WORDPRESS_URL ||
+    "",
+);
 
-let siteUrl = rawSiteUrl.trim();
-if (siteUrl.endsWith("/")) {
-  siteUrl = siteUrl.slice(0, -1);
-}
-if (siteUrl.toLowerCase().endsWith("/wp-json")) {
-  siteUrl = siteUrl.slice(0, -"/wp-json".length);
-}
+// This keeps behavior safe: return null/[] instead of throwing in production UI
+async function safeWpFetch<T>(path: string): Promise<T | null> {
+  if (!WP_BASE_URL) return null;
 
-const API_BASE = siteUrl ? `${siteUrl}/wp-json/wp/v2` : "";
-
-/**
- * Safely call the WordPress REST API.
- * - Returns parsed JSON on success
- * - Returns null on error / non-2xx
- * - Never throws; only console.warn in dev
- */
-async function safeWpFetch<T = any>(path: string): Promise<T | null> {
-  if (!API_BASE) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[wordpress.ts] Missing WordPress URL. Set NEXT_PUBLIC_WORDPRESS_URL to your site root."
-      );
-    }
-    return null;
-  }
-
-  const url = API_BASE + path;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const url = `${WP_BASE_URL}/wp-json/wp/v2${cleanPath}`;
 
   try {
     const res = await fetch(url, {
-      next: { revalidate: 60 },
       headers: { Accept: "application/json" },
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn(
-          "[wordpress.ts] WordPress request failed:",
-          res.status,
-          res.statusText,
-          "URL:",
-          url
-        );
-      }
+      // Helpful server log (shows in Vercel logs)
+      const text = await res.text().catch(() => "");
+      console.error(
+        `[WP] Fetch failed ${res.status} ${res.statusText} :: ${url} :: ${text.slice(0, 200)}`,
+      );
       return null;
     }
 
     return (await res.json()) as T;
   } catch (err) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[wordpress.ts] Error calling WordPress:", url, err);
-    }
+    console.error(`[WP] Fetch error :: ${url}`, err);
     return null;
   }
 }
 
-// ---------------- BLOG POSTS ----------------
-
-// Fetch blog posts ONLY, excluding posts in the "Testimonials" category
-export async function getPosts(limit: number = 6): Promise<WordPressPost[]> {
-  // Try to find the "Testimonials" category so we can exclude it
-  let testimonialsCategoryId: number | null = null;
-
-  try {
-    const categories = await safeWpFetch<any[]>(
-      `/categories?slug=testimonials`
-    );
-
-    if (Array.isArray(categories) && categories.length > 0) {
-      testimonialsCategoryId = categories[0].id;
-    }
-  } catch {
-    testimonialsCategoryId = null;
-  }
-
-  // Build the posts query; exclude the testimonials category if we found it
-  const query = testimonialsCategoryId
-    ? `/posts?per_page=${limit}&status=publish&categories_exclude=${testimonialsCategoryId}&_embed`
-    : `/posts?per_page=${limit}&status=publish&_embed`;
-
-  const data = await safeWpFetch<WordPressPost[]>(query);
-
-  if (!Array.isArray(data)) return [];
-  return data;
-}
-
-// Fetch a single blog post by its slug (used by /blog/[slug])
-export async function getPostBySlug(
-  slug: string
-): Promise<WordPressPost | null> {
-  const data = await safeWpFetch<WordPressPost[]>(
-    `/posts?slug=${encodeURIComponent(slug)}&status=publish&_embed`
-  );
-  if (!Array.isArray(data) || data.length === 0) return null;
-  return data[0];
-}
-
-// ---------------- TESTIMONIALS ----------------
-
-/**
- * Fetch testimonials from WordPress posts in the "Testimonials" category.
- *
- * WordPress setup required:
- *  - Create a category named "Testimonials" with slug "testimonials"
- *  - Create posts under that category:
- *      Title  = patient name
- *      Excerpt = short label
- *      Content = full quote
- */
-export async function getTestimonials(
-  limit: number = 3
-): Promise<WordPressPost[]> {
-  // 1) Look up category with slug "testimonials"
-  const categories = await safeWpFetch<any[]>(`/categories?slug=testimonials`);
-
-  if (!Array.isArray(categories) || categories.length === 0) {
-    // No category set up yet; caller should fall back to defaults
-    return [];
-  }
-
-  const categoryId = categories[0].id;
-
-  // 2) Fetch posts in that category
+export async function getPosts(limit = 12): Promise<WordPressPost[]> {
   const posts = await safeWpFetch<WordPressPost[]>(
-    `/posts?categories=${categoryId}&per_page=${limit}&status=publish&_embed`
+    `/posts?per_page=${limit}&status=publish&_embed`,
+  );
+  return Array.isArray(posts) ? posts : [];
+}
+
+export async function getPostBySlug(
+  slug: string,
+): Promise<WordPressPost | null> {
+  if (!slug) return null;
+
+  const posts = await safeWpFetch<WordPressPost[]>(
+    `/posts?slug=${encodeURIComponent(slug)}&status=publish&_embed`,
   );
 
-  if (!Array.isArray(posts)) return [];
-  return posts;
+  if (!Array.isArray(posts) || posts.length === 0) return null;
+  return posts[0];
+}
+
+export async function getPostsByCategorySlug(
+  categorySlug: string,
+  limit = 6,
+): Promise<WordPressPost[]> {
+  if (!categorySlug) return [];
+
+  const categories = await safeWpFetch<Array<{ id: number }>>(
+    `/categories?slug=${encodeURIComponent(categorySlug)}`,
+  );
+
+  const categoryId =
+    Array.isArray(categories) && categories[0]?.id ? categories[0].id : null;
+  if (!categoryId) return [];
+
+  const posts = await safeWpFetch<WordPressPost[]>(
+    `/posts?categories=${categoryId}&per_page=${limit}&status=publish&_embed`,
+  );
+
+  return Array.isArray(posts) ? posts : [];
 }
