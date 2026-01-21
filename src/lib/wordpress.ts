@@ -87,7 +87,7 @@ async function getCategoryIdBySlug(slug: string): Promise<number | null> {
  * ✅ Blog category slug (your WP screenshot): "physical-therapy"
  */
 export async function getBlogPosts(limit = 12): Promise<WordPressPost[]> {
-  const blogCategoryId = await getCategoryIdBySlug("physical-therapy");
+  const blogCategoryId = await getCategoryIdBySlug("blog");
   if (!blogCategoryId) return [];
 
   const posts = await safeWpFetch<WordPressPost[]>(
