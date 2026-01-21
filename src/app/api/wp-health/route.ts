@@ -11,14 +11,9 @@ function normalizeBaseUrl(url: string) {
 }
 
 export async function GET() {
-  // ✅ NEW key (bypasses poisoned old keys)
   const wpBaseNew = process.env.NEXT_PUBLIC_WP_BASE_URL || "";
+  const base = normalizeBaseUrl(wpBaseNew);
 
-  // Old keys (kept only for visibility/debug)
-  const wpApiOld = process.env.NEXT_PUBLIC_WP_API_URL || "";
-  const wpUrlOld = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
-
-  const base = normalizeBaseUrl(wpBaseNew || wpApiOld || wpUrlOld);
   const url = base
     ? `${base}/wp-json/wp/v2/posts?per_page=1&status=publish`
     : "";
@@ -32,13 +27,11 @@ export async function GET() {
     },
     seenEnv: {
       NEXT_PUBLIC_WP_BASE_URL: wpBaseNew,
-      NEXT_PUBLIC_WP_API_URL: wpApiOld,
-      NEXT_PUBLIC_WORDPRESS_URL: wpUrlOld,
     },
     computed: { base, url },
   };
 
-  const resHeaders = {
+  const headers = {
     "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
     Pragma: "no-cache",
     Expires: "0",
@@ -46,10 +39,9 @@ export async function GET() {
   };
 
   if (!base) {
-    return NextResponse.json(
-      { ...payload, error: "Missing WP base URL env var" },
-      { status: 200, headers: resHeaders },
-    );
+    payload.error =
+      "NEXT_PUBLIC_WP_BASE_URL is missing at runtime. Add it in Vercel (Production/Preview/Development) and redeploy.";
+    return NextResponse.json(payload, { status: 200, headers });
   }
 
   try {
@@ -57,7 +49,6 @@ export async function GET() {
       cache: "no-store",
       headers: {
         Accept: "application/json",
-        "User-Agent": "Mozilla/5.0 (Vercel; WP Health Check)",
       },
     });
 
@@ -76,11 +67,10 @@ export async function GET() {
           title: json?.[0]?.title?.rendered,
         }
       : json;
-    payload.rawPreview = text.slice(0, 200);
 
-    return NextResponse.json(payload, { status: 200, headers: resHeaders });
+    return NextResponse.json(payload, { status: 200, headers });
   } catch (err: any) {
     payload.error = String(err?.message || err);
-    return NextResponse.json(payload, { status: 200, headers: resHeaders });
+    return NextResponse.json(payload, { status: 200, headers });
   }
 }
