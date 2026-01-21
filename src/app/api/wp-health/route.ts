@@ -11,20 +11,20 @@ function normalizeBaseUrl(url: string) {
 }
 
 export async function GET() {
-  // Read env exactly as server sees it
+  // ✅ NEW key (bypasses poisoned old keys)
   const wpBaseNew = process.env.NEXT_PUBLIC_WP_BASE_URL || "";
+
+  // Old keys (kept only for visibility/debug)
   const wpApiOld = process.env.NEXT_PUBLIC_WP_API_URL || "";
   const wpUrlOld = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
 
   const base = normalizeBaseUrl(wpBaseNew || wpApiOld || wpUrlOld);
-
   const url = base
     ? `${base}/wp-json/wp/v2/posts?per_page=1&status=publish`
     : "";
 
   const payload: any = {
     ok: false,
-    // 🔥 Deployment fingerprint (proves what is actually serving this request)
     deployment: {
       VERCEL_ENV: process.env.VERCEL_ENV || null,
       VERCEL_URL: process.env.VERCEL_URL || null,
@@ -35,11 +35,9 @@ export async function GET() {
       NEXT_PUBLIC_WP_API_URL: wpApiOld,
       NEXT_PUBLIC_WORDPRESS_URL: wpUrlOld,
     },
-
     computed: { base, url },
   };
 
-  // ✅ Make response uncacheable at every layer
   const resHeaders = {
     "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
     Pragma: "no-cache",
@@ -49,7 +47,7 @@ export async function GET() {
 
   if (!base) {
     return NextResponse.json(
-      { ...payload, error: "Missing env vars" },
+      { ...payload, error: "Missing WP base URL env var" },
       { status: 200, headers: resHeaders },
     );
   }
