@@ -7,89 +7,135 @@ export type WordPressPost = {
   title: { rendered: string };
   excerpt: { rendered: string };
   content?: { rendered: string };
-  acf?: Record<string, any>;
-  _embedded?: any;
+  meta?: Record<string, any>;
 };
 
-function normalizeBaseUrl(url: string) {
-  return (url || "").trim().replace(/\/+$/, "");
+// Resolve WP site URL from multiple possible env vars
+const rawSiteUrl =
+  process.env.NEXT_PUBLIC_WORDPRESS_URL ||
+  process.env.NEXT_PUBLIC_WP_API_URL ||
+  process.env.NEXT_PUBLIC_WORDPRESS_SITE_URL ||
+  process.env.NEXT_PUBLIC_WP_SITE_URL ||
+  process.env.WORDPRESS_URL ||
+  "";
+
+let siteUrl = rawSiteUrl.trim();
+if (siteUrl.endsWith("/")) siteUrl = siteUrl.slice(0, -1);
+if (siteUrl.toLowerCase().endsWith("/wp-json")) {
+  siteUrl = siteUrl.slice(0, -"/wp-json".length);
 }
 
-// One source of truth (but supports your two env names)
-const WP_BASE_URL = normalizeBaseUrl(
-  process.env.NEXT_PUBLIC_WP_API_URL ||
-    process.env.NEXT_PUBLIC_WORDPRESS_URL ||
-    "",
-);
+const API_BASE = siteUrl ? `${siteUrl}/wp-json/wp/v2` : "";
 
-// This keeps behavior safe: return null/[] instead of throwing in production UI
-async function safeWpFetch<T>(path: string): Promise<T | null> {
-  if (!WP_BASE_URL) return null;
+/**
+ * Safely call the WordPress REST API.
+ * - Returns parsed JSON on success
+ * - Returns null on error / non-2xx
+ * - Never throws; only console.warn in dev
+ */
+async function safeWpFetch<T = any>(path: string): Promise<T | null> {
+  if (!API_BASE) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "[wordpress.ts] Missing WordPress URL. Set NEXT_PUBLIC_WORDPRESS_URL to your WP site root.",
+      );
+    }
+    return null;
+  }
 
-  const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  const base = (WP_BASE_URL || "").trim().replace(/\/+$/, "");
-
-  // If someone accidentally sets WP_BASE_URL to ".../wp-json", don't double it.
-  const normalizedBase = base.endsWith("/wp-json")
-    ? base.slice(0, -"/wp-json".length)
-    : base;
-
-  const url = `${normalizedBase}/wp-json/wp/v2${cleanPath}`;
+  const url = API_BASE + path;
 
   try {
     const res = await fetch(url, {
+      next: { revalidate: 60 },
       headers: { Accept: "application/json" },
-      cache: "no-store",
     });
 
     if (!res.ok) {
-      // Helpful server log (shows in Vercel logs)
-      const text = await res.text().catch(() => "");
-      console.error(
-        `[WP] Fetch failed ${res.status} ${res.statusText} :: ${url} :: ${text.slice(0, 200)}`,
-      );
+      if (process.env.NODE_ENV === "development") {
+        const text = await res.text().catch(() => "");
+        console.warn(
+          "[wordpress.ts] WordPress request failed:",
+          res.status,
+          res.statusText,
+          "URL:",
+          url,
+          "Body:",
+          text.slice(0, 200),
+        );
+      }
       return null;
     }
 
     return (await res.json()) as T;
   } catch (err) {
-    console.error(`[WP] Fetch error :: ${url}`, err);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[wordpress.ts] Error calling WordPress:", url, err);
+    }
     return null;
   }
 }
 
-export async function getPosts(limit = 12): Promise<WordPressPost[]> {
-  const posts = await safeWpFetch<WordPressPost[]>(
-    `/posts?per_page=${limit}&status=publish&_embed`,
+/** Get a category ID by slug (returns null if missing) */
+async function getCategoryIdBySlug(slug: string): Promise<number | null> {
+  const cats = await safeWpFetch<Array<{ id: number }>>(
+    `/categories?slug=${encodeURIComponent(slug)}`,
   );
-  return Array.isArray(posts) ? posts : [];
+  const id = Array.isArray(cats) ? cats?.[0]?.id : null;
+  return typeof id === "number" ? id : null;
 }
 
+// ---------------- BLOG POSTS ----------------
+
+/**
+ * Blog page should show ONLY posts in category slug "blog"
+ * If that category doesn't exist, we fall back to:
+ *  - all posts excluding "testimonials"
+ */
+export async function getPosts(limit: number = 6): Promise<WordPressPost[]> {
+  // Preferred: only "blog" category
+  const blogCategoryId = await getCategoryIdBySlug("blog");
+  if (blogCategoryId) {
+    const blogPosts = await safeWpFetch<WordPressPost[]>(
+      `/posts?per_page=${limit}&status=publish&categories=${blogCategoryId}&_embed`,
+    );
+    return Array.isArray(blogPosts) ? blogPosts : [];
+  }
+
+  // Fallback: exclude testimonials
+  const testimonialsCategoryId = await getCategoryIdBySlug("testimonials");
+
+  const query = testimonialsCategoryId
+    ? `/posts?per_page=${limit}&status=publish&categories_exclude=${testimonialsCategoryId}&_embed`
+    : `/posts?per_page=${limit}&status=publish&_embed`;
+
+  const data = await safeWpFetch<WordPressPost[]>(query);
+  return Array.isArray(data) ? data : [];
+}
+
+// Fetch a single blog post by its slug (used by /blog/[slug])
 export async function getPostBySlug(
   slug: string,
 ): Promise<WordPressPost | null> {
-  if (!slug) return null;
-
-  const posts = await safeWpFetch<WordPressPost[]>(
+  const data = await safeWpFetch<WordPressPost[]>(
     `/posts?slug=${encodeURIComponent(slug)}&status=publish&_embed`,
   );
-
-  if (!Array.isArray(posts) || posts.length === 0) return null;
-  return posts[0];
+  if (!Array.isArray(data) || data.length === 0) return null;
+  return data[0];
 }
 
-export async function getPostsByCategorySlug(
-  categorySlug: string,
-  limit = 6,
+// ---------------- TESTIMONIALS ----------------
+
+/**
+ * Testimonials are WP Posts in category slug "testimonials"
+ * - Title   = patient name
+ * - Excerpt = short label (optional)
+ * - Content = full quote
+ */
+export async function getTestimonials(
+  limit: number = 3,
 ): Promise<WordPressPost[]> {
-  if (!categorySlug) return [];
-
-  const categories = await safeWpFetch<Array<{ id: number }>>(
-    `/categories?slug=${encodeURIComponent(categorySlug)}`,
-  );
-
-  const categoryId =
-    Array.isArray(categories) && categories[0]?.id ? categories[0].id : null;
+  const categoryId = await getCategoryIdBySlug("testimonials");
   if (!categoryId) return [];
 
   const posts = await safeWpFetch<WordPressPost[]>(
