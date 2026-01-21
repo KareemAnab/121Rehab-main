@@ -27,7 +27,14 @@ async function safeWpFetch<T>(path: string): Promise<T | null> {
   if (!WP_BASE_URL) return null;
 
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  const url = `${WP_BASE_URL}/wp-json/wp/v2${cleanPath}`;
+  const base = (WP_BASE_URL || "").trim().replace(/\/+$/, "");
+
+  // If someone accidentally sets WP_BASE_URL to ".../wp-json", don't double it.
+  const normalizedBase = base.endsWith("/wp-json")
+    ? base.slice(0, -"/wp-json".length)
+    : base;
+
+  const url = `${normalizedBase}/wp-json/wp/v2${cleanPath}`;
 
   try {
     const res = await fetch(url, {
