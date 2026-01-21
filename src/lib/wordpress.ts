@@ -10,26 +10,28 @@ export type WordPressPost = {
 };
 
 function normalizeBaseUrl(url: string) {
-  // root only (no trailing slash, no /wp-json)
+  // root only (no trailing slash, strip /wp-json if someone accidentally includes it)
   return (url || "")
     .trim()
-    .replace(/\/+$/, "")
-    .replace(/\/wp-json$/, "");
+    .replace(/\/wp-json.*$/, "")
+    .replace(/\/+$/, "");
 }
 
-// ✅ ONLY these two are allowed
-const WP_BASE_URL = normalizeBaseUrl(
+// ✅ ONLY these are allowed
+const RAW_WP =
   process.env.NEXT_PUBLIC_WP_API_URL ||
-    process.env.NEXT_PUBLIC_WORDPRESS_URL ||
-    "",
-);
+  process.env.NEXT_PUBLIC_WORDPRESS_URL ||
+  "";
 
+const WP_BASE_URL = normalizeBaseUrl(RAW_WP);
 const API_BASE = WP_BASE_URL ? `${WP_BASE_URL}/wp-json/wp/v2` : "";
 
 async function safeWpFetch<T>(path: string): Promise<T | null> {
   if (!API_BASE) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[WP] Missing WP base URL env. Set NEXT_PUBLIC_WP_API_URL.");
+      console.warn(
+        "[WP] Missing WP base URL env. Set NEXT_PUBLIC_WP_API_URL or NEXT_PUBLIC_WORDPRESS_URL.",
+      );
     }
     return null;
   }
@@ -41,7 +43,6 @@ async function safeWpFetch<T>(path: string): Promise<T | null> {
       cache: "no-store",
       headers: {
         Accept: "application/json",
-        // Helps with some hosts that block "unknown" UA
         "User-Agent": "Mozilla/5.0 (Next.js; WP Fetch)",
       },
     });
@@ -49,7 +50,7 @@ async function safeWpFetch<T>(path: string): Promise<T | null> {
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       console.error(
-        `[WP] Fetch failed ${res.status} :: ${url} :: ${text.slice(0, 200)}`,
+        `[WP] Fetch failed ${res.status} ${res.statusText} :: ${url} :: ${text.slice(0, 200)}`,
       );
       return null;
     }
@@ -69,7 +70,9 @@ async function getCategoryIdBySlug(slug: string): Promise<number | null> {
   return typeof id === "number" ? id : null;
 }
 
-// ✅ IMPORTANT: your blog slug is NOT "blog". It's "physical-therapy"
+/**
+ * ✅ Blog category slug (your WP screenshot): "physical-therapy"
+ */
 export async function getBlogPosts(limit = 12): Promise<WordPressPost[]> {
   const blogCategoryId = await getCategoryIdBySlug("physical-therapy");
 
@@ -85,6 +88,9 @@ export async function getBlogPosts(limit = 12): Promise<WordPressPost[]> {
   return Array.isArray(posts) ? posts : [];
 }
 
+/**
+ * ✅ Testimonials category slug: "testimonials"
+ */
 export async function getTestimonials(limit = 3): Promise<WordPressPost[]> {
   const categoryId = await getCategoryIdBySlug("testimonials");
   if (!categoryId) return [];
