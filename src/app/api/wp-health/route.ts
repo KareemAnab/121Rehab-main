@@ -11,23 +11,33 @@ function normalizeBaseUrl(url: string) {
 }
 
 export async function GET() {
-  const raw =
-    process.env.NEXT_PUBLIC_WP_API_URL ||
-    process.env.NEXT_PUBLIC_WORDPRESS_URL ||
-    "";
-  const base = normalizeBaseUrl(raw);
+  // Only these two are allowed.
+  const wpApi = process.env.NEXT_PUBLIC_WP_API_URL || "";
+  const wpUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+
+  const base = normalizeBaseUrl(wpApi || wpUrl);
+  const url = base
+    ? `${base}/wp-json/wp/v2/posts?per_page=1&status=publish`
+    : "";
+
+  // Return what the server *actually* sees (no secrets here, just URLs)
+  const debug = {
+    seenEnv: {
+      NEXT_PUBLIC_WP_API_URL: wpApi,
+      NEXT_PUBLIC_WORDPRESS_URL: wpUrl,
+    },
+    computed: {
+      base,
+      url,
+    },
+  };
 
   if (!base) {
     return NextResponse.json(
-      {
-        ok: false,
-        error: "Missing NEXT_PUBLIC_WP_API_URL or NEXT_PUBLIC_WORDPRESS_URL",
-      },
-      { status: 500 },
+      { ok: false, ...debug, error: "Missing env vars" },
+      { status: 200 },
     );
   }
-
-  const url = `${base}/wp-json/wp/v2/posts?per_page=1&status=publish`;
 
   try {
     const res = await fetch(url, {
@@ -48,7 +58,7 @@ export async function GET() {
       {
         ok: res.ok,
         status: res.status,
-        url,
+        ...debug,
         sample: Array.isArray(json)
           ? {
               id: json?.[0]?.id,
@@ -62,7 +72,7 @@ export async function GET() {
     );
   } catch (err: any) {
     return NextResponse.json(
-      { ok: false, url, error: String(err?.message || err) },
+      { ok: false, ...debug, error: String(err?.message || err) },
       { status: 200 },
     );
   }
