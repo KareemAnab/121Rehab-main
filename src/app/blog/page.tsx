@@ -12,7 +12,8 @@ import {
   hover,
 } from "@/components/motion/Motion";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function stripHtml(html: string) {
   return html
