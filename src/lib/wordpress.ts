@@ -7,63 +7,64 @@ export type WordPressPost = {
   title: { rendered: string };
   excerpt: { rendered: string };
   content?: { rendered: string };
+  acf?: Record<string, any>;
+  _embedded?: any;
 };
 
 function normalizeBaseUrl(url: string) {
-  return (url || "")
-    .trim()
-    .replace(/\/wp-json.*$/, "")
-    .replace(/\/+$/, "");
+  return (url || "").trim().replace(/\/+$/, "");
 }
 
 /**
- * ✅ Preferred (new) key: NEXT_PUBLIC_WP_BASE_URL
- * ✅ Fallbacks (old keys): NEXT_PUBLIC_WP_API_URL, NEXT_PUBLIC_WORDPRESS_URL
- *
- * IMPORTANT:
- * - Do NOT throw at import time (breaks build).
- * - If missing, return empty results and log once.
+ * We support ALL env var names that have existed in this project.
+ * This prevents "works locally but not prod" when Vercel is set differently.
  */
-const WP_BASE_URL = normalizeBaseUrl(
-  process.env.NEXT_PUBLIC_WP_BASE_URL ||
-    process.env.NEXT_PUBLIC_WP_API_URL ||
-    process.env.NEXT_PUBLIC_WORDPRESS_URL ||
-    "",
-);
+function resolveWpBaseUrl() {
+  const raw =
+    process.env.NEXT_PUBLIC_WP_BASE_URL || // ✅ new (your current working one)
+    process.env.NEXT_PUBLIC_WP_SITE_URL || // ✅ some versions you tried
+    process.env.NEXT_PUBLIC_WP_API_URL || // ✅ older
+    process.env.NEXT_PUBLIC_WORDPRESS_URL || // ✅ older
+    "";
 
-const API_BASE = WP_BASE_URL ? `${WP_BASE_URL}/wp-json/wp/v2` : "";
+  const base = normalizeBaseUrl(raw);
 
-let warnedMissing = false;
+  // If someone sets ".../wp-json", normalize it back to the site root.
+  if (base.endsWith("/wp-json")) {
+    return base.slice(0, -"/wp-json".length);
+  }
 
+  return base;
+}
+
+const WP_BASE_URL = resolveWpBaseUrl();
+
+/**
+ * IMPORTANT:
+ * - This is server-side fetching (Next.js App Router)
+ * - We force no-store so production doesn't "freeze" fallback content.
+ */
 async function safeWpFetch<T>(path: string): Promise<T | null> {
-  if (!API_BASE) {
-    if (!warnedMissing) {
-      warnedMissing = true;
-      console.warn(
-        "[WP] Missing WP env var. Set NEXT_PUBLIC_WP_BASE_URL (preferred) or NEXT_PUBLIC_WP_API_URL / NEXT_PUBLIC_WORDPRESS_URL.",
-      );
-    }
+  if (!WP_BASE_URL) {
+    console.error(
+      `[WP] Missing WP base URL. Set one of: NEXT_PUBLIC_WP_BASE_URL / NEXT_PUBLIC_WP_SITE_URL / NEXT_PUBLIC_WP_API_URL / NEXT_PUBLIC_WORDPRESS_URL`,
+    );
     return null;
   }
 
-  const url = `${API_BASE}${path}`;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const url = `${WP_BASE_URL}/wp-json/wp/v2${cleanPath}`;
 
   try {
     const res = await fetch(url, {
+      headers: { Accept: "application/json" },
       cache: "no-store",
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "Mozilla/5.0 (Next.js; WP Fetch)",
-      },
     });
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       console.error(
-        `[WP] Fetch failed ${res.status} ${res.statusText} :: ${url} :: ${text.slice(
-          0,
-          200,
-        )}`,
+        `[WP] Fetch failed ${res.status} ${res.statusText} :: ${url} :: ${text.slice(0, 200)}`,
       );
       return null;
     }
@@ -75,48 +76,48 @@ async function safeWpFetch<T>(path: string): Promise<T | null> {
   }
 }
 
-async function getCategoryIdBySlug(slug: string): Promise<number | null> {
-  const cats = await safeWpFetch<Array<{ id: number }>>(
-    `/categories?slug=${encodeURIComponent(slug)}`,
-  );
-  const id = Array.isArray(cats) ? cats?.[0]?.id : null;
-  return typeof id === "number" ? id : null;
-}
-
-/**
- * ✅ Blog category slug (your WP screenshot): "physical-therapy"
- */
-export async function getBlogPosts(limit = 12): Promise<WordPressPost[]> {
-  const blogCategoryId = await getCategoryIdBySlug("blog");
-  if (!blogCategoryId) return [];
-
+export async function getPosts(limit = 12): Promise<WordPressPost[]> {
   const posts = await safeWpFetch<WordPressPost[]>(
-    `/posts?per_page=${limit}&status=publish&categories=${blogCategoryId}&_embed`,
+    `/posts?per_page=${limit}&status=publish&_embed`,
   );
-
-  return Array.isArray(posts) ? posts : [];
-}
-
-/**
- * ✅ Testimonials category slug: "testimonials"
- */
-export async function getTestimonials(limit = 3): Promise<WordPressPost[]> {
-  const categoryId = await getCategoryIdBySlug("testimonials");
-  if (!categoryId) return [];
-
-  const posts = await safeWpFetch<WordPressPost[]>(
-    `/posts?per_page=${limit}&status=publish&categories=${categoryId}&_embed`,
-  );
-
   return Array.isArray(posts) ? posts : [];
 }
 
 export async function getPostBySlug(
   slug: string,
 ): Promise<WordPressPost | null> {
-  const data = await safeWpFetch<WordPressPost[]>(
+  if (!slug) return null;
+
+  const posts = await safeWpFetch<WordPressPost[]>(
     `/posts?slug=${encodeURIComponent(slug)}&status=publish&_embed`,
   );
-  if (!Array.isArray(data) || data.length === 0) return null;
-  return data[0];
+
+  if (!Array.isArray(posts) || posts.length === 0) return null;
+  return posts[0];
+}
+
+export async function getPostsByCategorySlug(
+  categorySlug: string,
+  limit = 6,
+): Promise<WordPressPost[]> {
+  if (!categorySlug) return [];
+
+  const cats = await safeWpFetch<Array<{ id: number; slug: string }>>(
+    `/categories?slug=${encodeURIComponent(categorySlug)}`,
+  );
+
+  const categoryId = Array.isArray(cats) && cats[0]?.id ? cats[0].id : null;
+
+  if (!categoryId) {
+    console.error(
+      `[WP] Category slug not found: "${categorySlug}". Check WP category slug exactly.`,
+    );
+    return [];
+  }
+
+  const posts = await safeWpFetch<WordPressPost[]>(
+    `/posts?categories=${categoryId}&per_page=${limit}&status=publish&_embed`,
+  );
+
+  return Array.isArray(posts) ? posts : [];
 }
