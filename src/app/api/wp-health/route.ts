@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getBlogPosts, getTestimonials } from "@/lib/wordpress";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,67 +11,80 @@ function normalizeBaseUrl(url: string) {
     .replace(/\/+$/, "");
 }
 
-export async function GET() {
-  const wpBaseNew = process.env.NEXT_PUBLIC_WP_BASE_URL || "";
-  const base = normalizeBaseUrl(wpBaseNew);
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const mode = searchParams.get("mode") || "testimonials";
 
-  const url = base
-    ? `${base}/wp-json/wp/v2/posts?per_page=1&status=publish`
-    : "";
+  const WP_BASE_URL = normalizeBaseUrl(
+    process.env.NEXT_PUBLIC_WP_BASE_URL ||
+      process.env.NEXT_PUBLIC_WP_API_URL ||
+      process.env.NEXT_PUBLIC_WORDPRESS_URL ||
+      "",
+  );
 
-  const payload: any = {
-    ok: false,
-    deployment: {
-      VERCEL_ENV: process.env.VERCEL_ENV || null,
-      VERCEL_URL: process.env.VERCEL_URL || null,
-      VERCEL_GIT_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA || null,
-    },
-    seenEnv: {
-      NEXT_PUBLIC_WP_BASE_URL: wpBaseNew,
-    },
-    computed: { base, url },
+  const seenEnv = {
+    NEXT_PUBLIC_WP_BASE_URL: process.env.NEXT_PUBLIC_WP_BASE_URL || "",
+    NEXT_PUBLIC_WP_API_URL: process.env.NEXT_PUBLIC_WP_API_URL || "",
+    NEXT_PUBLIC_WORDPRESS_URL: process.env.NEXT_PUBLIC_WORDPRESS_URL || "",
   };
 
-  const headers = {
-    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-    Pragma: "no-cache",
-    Expires: "0",
-    "Surrogate-Control": "no-store",
-  };
-
-  if (!base) {
-    payload.error =
-      "NEXT_PUBLIC_WP_BASE_URL is missing at runtime. Add it in Vercel (Production/Preview/Development) and redeploy.";
-    return NextResponse.json(payload, { status: 200, headers });
+  if (!WP_BASE_URL) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "No WP base URL found. Set NEXT_PUBLIC_WP_BASE_URL (preferred) or NEXT_PUBLIC_WP_API_URL / NEXT_PUBLIC_WORDPRESS_URL.",
+        seenEnv,
+      },
+      { status: 500 },
+    );
   }
 
   try {
-    const res = await fetch(url, {
-      cache: "no-store",
-      headers: {
-        Accept: "application/json",
+    if (mode === "blog") {
+      const posts = await getBlogPosts(12);
+      return NextResponse.json({
+        ok: true,
+        mode,
+        base: WP_BASE_URL,
+        count: posts.length,
+        slugs: posts.map((p) => p.slug),
+        titles: posts.map((p) => p.title?.rendered),
+        seenEnv,
+      });
+    }
+
+    if (mode === "testimonials") {
+      const posts = await getTestimonials(12);
+      return NextResponse.json({
+        ok: true,
+        mode,
+        base: WP_BASE_URL,
+        count: posts.length,
+        slugs: posts.map((p) => p.slug),
+        titles: posts.map((p) => p.title?.rendered),
+        seenEnv,
+      });
+    }
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Unknown mode "${mode}". Use ?mode=blog or ?mode=testimonials`,
+        seenEnv,
       },
-    });
-
-    const text = await res.text();
-    let json: any = null;
-    try {
-      json = JSON.parse(text);
-    } catch {}
-
-    payload.ok = res.ok;
-    payload.status = res.status;
-    payload.sample = Array.isArray(json)
-      ? {
-          id: json?.[0]?.id,
-          slug: json?.[0]?.slug,
-          title: json?.[0]?.title?.rendered,
-        }
-      : json;
-
-    return NextResponse.json(payload, { status: 200, headers });
+      { status: 400 },
+    );
   } catch (err: any) {
-    payload.error = String(err?.message || err);
-    return NextResponse.json(payload, { status: 200, headers });
+    return NextResponse.json(
+      {
+        ok: false,
+        mode,
+        base: WP_BASE_URL,
+        error: err?.message || "Unknown error",
+        seenEnv,
+      },
+      { status: 500 },
+    );
   }
 }

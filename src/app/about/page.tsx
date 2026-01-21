@@ -11,6 +11,7 @@ import {
 } from "@/components/motion/Motion";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 export const revalidate = 0;
 
 const defaultTestimonials = [
