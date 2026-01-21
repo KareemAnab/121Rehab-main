@@ -12,10 +12,12 @@ function normalizeBaseUrl(url: string) {
 
 export async function GET() {
   // Read env exactly as server sees it
-  const wpApi = process.env.NEXT_PUBLIC_WP_API_URL || "";
-  const wpUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+  const wpBaseNew = process.env.NEXT_PUBLIC_WP_BASE_URL || "";
+  const wpApiOld = process.env.NEXT_PUBLIC_WP_API_URL || "";
+  const wpUrlOld = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
 
-  const base = normalizeBaseUrl(wpApi || wpUrl);
+  const base = normalizeBaseUrl(wpBaseNew || wpApiOld || wpUrlOld);
+
   const url = base
     ? `${base}/wp-json/wp/v2/posts?per_page=1&status=publish`
     : "";
@@ -29,9 +31,11 @@ export async function GET() {
       VERCEL_GIT_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA || null,
     },
     seenEnv: {
-      NEXT_PUBLIC_WP_API_URL: wpApi,
-      NEXT_PUBLIC_WORDPRESS_URL: wpUrl,
+      NEXT_PUBLIC_WP_BASE_URL: wpBaseNew,
+      NEXT_PUBLIC_WP_API_URL: wpApiOld,
+      NEXT_PUBLIC_WORDPRESS_URL: wpUrlOld,
     },
+
     computed: { base, url },
   };
 

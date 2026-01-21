@@ -10,32 +10,24 @@ export type WordPressPost = {
 };
 
 function normalizeBaseUrl(url: string) {
-  // root only (no trailing slash, strip /wp-json if someone accidentally includes it)
   return (url || "")
     .trim()
     .replace(/\/wp-json.*$/, "")
     .replace(/\/+$/, "");
 }
 
-// ✅ ONLY these are allowed
-const RAW_WP =
-  process.env.NEXT_PUBLIC_WP_API_URL ||
-  process.env.NEXT_PUBLIC_WORDPRESS_URL ||
-  "";
+// ✅ NEW SINGLE SOURCE OF TRUTH (bypasses poisoned old env keys)
+const WP_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_WP_BASE_URL || "");
 
-const WP_BASE_URL = normalizeBaseUrl(RAW_WP);
-const API_BASE = WP_BASE_URL ? `${WP_BASE_URL}/wp-json/wp/v2` : "";
+if (!WP_BASE_URL) {
+  throw new Error(
+    "Missing NEXT_PUBLIC_WP_BASE_URL. Set it in Vercel for Production/Preview/Development.",
+  );
+}
+
+const API_BASE = `${WP_BASE_URL}/wp-json/wp/v2`;
 
 async function safeWpFetch<T>(path: string): Promise<T | null> {
-  if (!API_BASE) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[WP] Missing WP base URL env. Set NEXT_PUBLIC_WP_API_URL or NEXT_PUBLIC_WORDPRESS_URL.",
-      );
-    }
-    return null;
-  }
-
   const url = `${API_BASE}${path}`;
 
   try {
@@ -75,11 +67,7 @@ async function getCategoryIdBySlug(slug: string): Promise<number | null> {
  */
 export async function getBlogPosts(limit = 12): Promise<WordPressPost[]> {
   const blogCategoryId = await getCategoryIdBySlug("physical-therapy");
-
-  if (!blogCategoryId) {
-    console.warn('[WP] Blog category slug "physical-therapy" not found.');
-    return [];
-  }
+  if (!blogCategoryId) return [];
 
   const posts = await safeWpFetch<WordPressPost[]>(
     `/posts?per_page=${limit}&status=publish&categories=${blogCategoryId}&_embed`,
