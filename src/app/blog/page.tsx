@@ -1,6 +1,6 @@
 // src/app/blog/page.tsx
 import Link from "next/link";
-import { getPosts } from "@/lib/wordpress";
+import { getBlogPosts } from "@/lib/wordpress";
 import YouTubeBanner from "@/components/blog/YouTubeBanner";
 import { HERO_GRADIENT } from "@/lib/theme";
 import {
@@ -31,7 +31,7 @@ function isDefaultWPPost(post: any) {
 }
 
 export default async function BlogPage() {
-  const postsRaw = await getPosts(12);
+  const postsRaw = await getBlogPosts(12);
 
   const posts = (postsRaw ?? [])
     .filter((p: any) => !isDefaultWPPost(p))

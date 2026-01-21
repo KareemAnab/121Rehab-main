@@ -15,12 +15,14 @@ export async function GET() {
     process.env.NEXT_PUBLIC_WP_API_URL ||
     process.env.NEXT_PUBLIC_WORDPRESS_URL ||
     "";
-
   const base = normalizeBaseUrl(raw);
 
   if (!base) {
     return NextResponse.json(
-      { ok: false, error: "Missing WP base URL env var" },
+      {
+        ok: false,
+        error: "Missing NEXT_PUBLIC_WP_API_URL or NEXT_PUBLIC_WORDPRESS_URL",
+      },
       { status: 500 },
     );
   }
@@ -32,25 +34,20 @@ export async function GET() {
       cache: "no-store",
       headers: {
         Accept: "application/json",
-        // Some hosts block unknown UA; this helps.
         "User-Agent": "Mozilla/5.0 (Vercel; WP Health Check)",
       },
     });
 
     const text = await res.text();
-
     let json: any = null;
     try {
       json = JSON.parse(text);
-    } catch {
-      // not JSON
-    }
+    } catch {}
 
     return NextResponse.json(
       {
         ok: res.ok,
         status: res.status,
-        statusText: res.statusText,
         url,
         sample: Array.isArray(json)
           ? {
