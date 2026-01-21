@@ -6,12 +6,12 @@ export const dynamic = "force-dynamic";
 function normalizeBaseUrl(url: string) {
   return (url || "")
     .trim()
-    .replace(/\/+$/, "")
-    .replace(/\/wp-json$/, "");
+    .replace(/\/wp-json.*$/, "")
+    .replace(/\/+$/, "");
 }
 
 export async function GET() {
-  // Only these two are allowed.
+  // Read env exactly as server sees it
   const wpApi = process.env.NEXT_PUBLIC_WP_API_URL || "";
   const wpUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
 
@@ -20,22 +20,33 @@ export async function GET() {
     ? `${base}/wp-json/wp/v2/posts?per_page=1&status=publish`
     : "";
 
-  // Return what the server *actually* sees (no secrets here, just URLs)
-  const debug = {
+  const payload: any = {
+    ok: false,
+    // 🔥 Deployment fingerprint (proves what is actually serving this request)
+    deployment: {
+      VERCEL_ENV: process.env.VERCEL_ENV || null,
+      VERCEL_URL: process.env.VERCEL_URL || null,
+      VERCEL_GIT_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA || null,
+    },
     seenEnv: {
       NEXT_PUBLIC_WP_API_URL: wpApi,
       NEXT_PUBLIC_WORDPRESS_URL: wpUrl,
     },
-    computed: {
-      base,
-      url,
-    },
+    computed: { base, url },
+  };
+
+  // ✅ Make response uncacheable at every layer
+  const resHeaders = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+    "Surrogate-Control": "no-store",
   };
 
   if (!base) {
     return NextResponse.json(
-      { ok: false, ...debug, error: "Missing env vars" },
-      { status: 200 },
+      { ...payload, error: "Missing env vars" },
+      { status: 200, headers: resHeaders },
     );
   }
 
@@ -54,26 +65,20 @@ export async function GET() {
       json = JSON.parse(text);
     } catch {}
 
-    return NextResponse.json(
-      {
-        ok: res.ok,
-        status: res.status,
-        ...debug,
-        sample: Array.isArray(json)
-          ? {
-              id: json?.[0]?.id,
-              slug: json?.[0]?.slug,
-              title: json?.[0]?.title?.rendered,
-            }
-          : json,
-        rawPreview: text.slice(0, 200),
-      },
-      { status: 200 },
-    );
+    payload.ok = res.ok;
+    payload.status = res.status;
+    payload.sample = Array.isArray(json)
+      ? {
+          id: json?.[0]?.id,
+          slug: json?.[0]?.slug,
+          title: json?.[0]?.title?.rendered,
+        }
+      : json;
+    payload.rawPreview = text.slice(0, 200);
+
+    return NextResponse.json(payload, { status: 200, headers: resHeaders });
   } catch (err: any) {
-    return NextResponse.json(
-      { ok: false, ...debug, error: String(err?.message || err) },
-      { status: 200 },
-    );
+    payload.error = String(err?.message || err);
+    return NextResponse.json(payload, { status: 200, headers: resHeaders });
   }
 }
