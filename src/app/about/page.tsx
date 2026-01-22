@@ -9,6 +9,7 @@ import {
   enter,
   hover,
 } from "@/components/motion/Motion";
+import { getTestimonials } from "@/lib/wordpress";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -96,54 +97,21 @@ function stripHtmlToText(html: string) {
     .trim();
 }
 
-/**
- * Fetch testimonials from WP *Posts* category slug = "testimonials"
- * This is easiest for the client (normal WP Posts workflow).
- */
-async function getTestimonialsFromPostsCategory(
-  limit = 3,
-): Promise<UITestimonial[]> {
-  const base = process.env.NEXT_PUBLIC_WP_API_URL || "";
-
-  if (!base) return [];
-
-  // 1) Find the category ID by slug
-  const catRes = await fetch(
-    `${base.replace(/\/$/, "")}/wp-json/wp/v2/categories?slug=testimonials`,
-    { cache: "no-store" },
-  );
-
-  if (!catRes.ok) return [];
-  const cats = (await catRes.json()) as Array<{ id: number }>;
-  const catId = cats?.[0]?.id;
-  if (!catId) return [];
-
-  // 2) Fetch posts in that category
-  const postsRes = await fetch(
-    `${base.replace(
-      /\/$/,
-      "",
-    )}/wp-json/wp/v2/posts?per_page=${limit}&categories=${catId}`,
-    { cache: "no-store" },
-  );
-
-  if (!postsRes.ok) return [];
-
-  const posts = (await postsRes.json()) as any[];
-
-  return posts.map((p) => ({
-    name: stripHtmlToText(p?.title?.rendered ?? "") || "Patient",
-    label: "",
-    quoteHtml: p?.content?.rendered ?? "",
-  }));
-}
-
 export default async function AboutPage() {
   let cmsTestimonials: UITestimonial[] = [];
 
   try {
-    cmsTestimonials = await getTestimonialsFromPostsCategory(3);
-  } catch {
+    // Uses centralized WP helper (env-safe across prod/preview/dev)
+    const posts = await getTestimonials(3);
+
+    cmsTestimonials = posts.map((p: any) => ({
+      name: stripHtmlToText(p?.title?.rendered ?? "") || "Patient",
+      label: "",
+      quoteHtml: p?.content?.rendered ?? "",
+    }));
+  } catch (err) {
+    // Keep fallback behavior; log helps debug prod without breaking UI.
+    console.error("About page testimonials fetch failed:", err);
     cmsTestimonials = [];
   }
 
